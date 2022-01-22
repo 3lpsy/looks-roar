@@ -8,4 +8,4 @@ edition = "2021"
 [dependencies]
 ethers = { git = "https://github.com/gakonst/ethers-rs" }
 clap = { version = "3.0.0", features = ["derive"] }
-reqwest = "*"
+reqwest = { version = "*", features = ["gzip"]}

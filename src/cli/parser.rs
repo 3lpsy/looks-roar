@@ -5,6 +5,7 @@ pub fn parse() -> clap::ArgMatches {
         .short('n')
         .long("number")
         .help("number to list")
+        .default_value("10")
         .takes_value(true);
     let arg_contract = Arg::new("contract")
         .short('c')
@@ -12,6 +13,10 @@ pub fn parse() -> clap::ArgMatches {
         .help("contract to target")
         .required(true)
         .takes_value(true);
+    let arg_testnet = Arg::new("testnet")
+        .short('t')
+        .long("testnet")
+        .help("use testnet");
     let verbose = Arg::new("verbose")
         .short('v')
         .long("verbose")
@@ -23,9 +28,10 @@ pub fn parse() -> clap::ArgMatches {
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .arg(verbose)
         .subcommand(
-            App::new("top")
-                .about("list top rarirties")
+            App::new("floor")
+                .about("list floor rarirties")
                 .arg(arg_number)
+                .arg(arg_testnet)
                 .arg(arg_contract),
         )
         .get_matches()
