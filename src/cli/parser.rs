@@ -29,10 +29,17 @@ pub fn parse() -> clap::ArgMatches {
         .arg(verbose)
         .subcommand(
             App::new("floor")
-                .about("list floor rarirties")
-                .arg(arg_number)
-                .arg(arg_testnet)
-                .arg(arg_contract),
+                .about("list floor prices")
+                .arg(arg_number.clone())
+                .arg(arg_testnet.clone())
+                .arg(arg_contract.clone()),
+        )
+        .subcommand(
+            App::new("top")
+                .about("list top rarities")
+                .arg(arg_number.clone())
+                .arg(arg_testnet.clone())
+                .arg(arg_contract.clone()),
         )
         .get_matches()
 }
