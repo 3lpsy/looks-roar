@@ -13,6 +13,11 @@ pub fn parse() -> clap::ArgMatches {
         .help("contract to target")
         .required(true)
         .takes_value(true);
+    let arg_provider = Arg::new("provider")
+        .short('p')
+        .long("provider")
+        .help("ethereum provider")
+        .takes_value(true);
     let arg_testnet = Arg::new("testnet")
         .short('t')
         .long("testnet")
@@ -24,12 +29,13 @@ pub fn parse() -> clap::ArgMatches {
         .global(true);
     App::new("roar")
         .bin_name("roar")
-        .about("roarity inspector")
+        .about("> An NFT roarity inspector")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .arg(verbose)
         .subcommand(
             App::new("floor")
                 .about("list floor prices")
+                .arg(arg_provider.clone())
                 .arg(arg_number.clone())
                 .arg(arg_testnet.clone())
                 .arg(arg_contract.clone()),
@@ -37,6 +43,7 @@ pub fn parse() -> clap::ArgMatches {
         .subcommand(
             App::new("top")
                 .about("list top rarities")
+                .arg(arg_provider.clone())
                 .arg(arg_number.clone())
                 .arg(arg_testnet.clone())
                 .arg(arg_contract.clone()),

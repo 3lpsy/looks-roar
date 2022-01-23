@@ -1,14 +1,22 @@
 mod cli;
 mod commands;
 mod market;
-use commands::floor;
+use commands::{floor, top};
 
 fn main() {
     let args = cli::parser::parse();
     match args.subcommand() {
-        Some(("floor", floor_matches)) => match floor::validate(floor_matches) {
-            Ok(floor_args) => {
-                floor::run(floor_args);
+        Some(("floor", matches)) => match floor::validate(matches) {
+            Ok(command_args) => {
+                floor::run(command_args);
+            }
+            Err(e) => {
+                println!("Error: {:?}", e)
+            }
+        },
+        Some(("top", matches)) => match top::validate(matches) {
+            Ok(command_args) => {
+                top::run(command_args);
             }
             Err(e) => {
                 println!("Error: {:?}", e)
