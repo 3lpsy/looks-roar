@@ -1,5 +1,5 @@
 use crate::market::constants;
-use crate::market::types::Network;
+use crate::market::types::Endpoint;
 use ethers::abi::Address;
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
@@ -7,11 +7,11 @@ use std::error;
 
 pub struct OpenSeaApi {
     http: Client,
-    network: Network,
+    endpoint: Endpoint,
 }
 
 impl OpenSeaApi {
-    pub fn new(network: Network) -> Self {
+    pub fn new(endpoint: Endpoint) -> Self {
         let mut headers = HeaderMap::new();
         headers.insert("Origin", HeaderValue::from_static("https://looksrare.org"));
         headers.insert("Referer", HeaderValue::from_static("https://looksrare.org"));
@@ -36,7 +36,7 @@ impl OpenSeaApi {
         let client = builder.build().unwrap();
         Self {
             http: client,
-            network,
+            endpoint,
         }
     }
     pub fn get_floor(&self, contract: Address, limit: u8) -> Result<(), Box<dyn error::Error>> {

@@ -1,16 +1,16 @@
 use crate::market::constants;
 
 #[derive(Clone, Debug)]
-pub enum Network {
+pub enum Endpoint {
     Mainnet,
     Rinkeby,
 }
 
-impl Network {
+impl Endpoint {
     pub fn url(&self) -> &str {
         match self {
-            Network::Mainnet => constants::API_BASE_MAINNET,
-            Network::Rinkeby => constants::API_BASE_RINKEBY,
+            Endpoint::Mainnet => constants::API_BASE_MAINNET,
+            Endpoint::Rinkeby => constants::API_BASE_RINKEBY,
         }
     }
 }

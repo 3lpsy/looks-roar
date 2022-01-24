@@ -1,6 +1,6 @@
 use crate::commands::common;
 use crate::market::opensea;
-use crate::market::types::Network;
+use crate::market::types::Endpoint;
 use clap::ArgMatches;
 use std::io;
 
@@ -20,8 +20,8 @@ pub fn run(args: FloorArgs) {
     // assuming contract exists and is good
     // build client
     let api = match args.common.testnet {
-        true => opensea::OpenSeaApi::new(Network::Rinkeby),
-        false => opensea::OpenSeaApi::new(Network::Mainnet),
+        true => opensea::OpenSeaApi::new(Endpoint::Rinkeby),
+        false => opensea::OpenSeaApi::new(Endpoint::Mainnet),
     };
 
     // floor api is syntactice sugar that builds request for you

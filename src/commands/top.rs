@@ -1,6 +1,6 @@
 use crate::commands::common;
+use crate::contract::nft;
 use clap::ArgMatches;
-use ethers::core::types::Address;
 use std::io;
 
 #[derive(Debug)]
@@ -20,8 +20,14 @@ pub fn validate(args: &ArgMatches) -> Result<TopArgs, io::Error> {
         Err(e) => Err(e),
     }
 }
-pub fn run(args: TopArgs) {
+pub async fn run(args: TopArgs) -> Result<(), io::Error> {
     // initialize provider
-    dbg!(args);
+    // need to do abigen and contract iniitalization
+    //
+    let address = args.common.contract;
+    let provider = args.common.provider.unwrap();
+    // TODO: need to confirm args.provider exists and is provided!
+    let nft = nft::build_any(address, provider).await;
+    dbg!(nft.unwrap().iface); 
     unimplemented!();
 }
