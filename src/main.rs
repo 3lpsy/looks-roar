@@ -2,7 +2,7 @@ mod cli;
 mod commands;
 mod contract;
 mod market;
-use commands::{floor, top};
+use commands::{floor, iface, top};
 use std::io;
 
 #[tokio::main]
@@ -20,6 +20,14 @@ async fn main() -> Result<(), io::Error> {
         Some(("top", matches)) => match top::validate(matches) {
             Ok(command_args) => {
                 top::run(command_args).await?;
+            }
+            Err(e) => {
+                println!("Error: {:?}", e)
+            }
+        },
+        Some(("type", matches)) => match iface::validate(matches) {
+            Ok(command_args) => {
+                iface::run(command_args).await?;
             }
             Err(e) => {
                 println!("Error: {:?}", e)

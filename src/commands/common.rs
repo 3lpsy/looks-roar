@@ -10,21 +10,14 @@ pub struct CommonArgs {
     pub contract: Address,
     pub provider: Option<Provider<Http>>,
     pub testnet: bool,
-    pub number: u8,
 }
 
 impl CommonArgs {
-    pub fn new(
-        contract: Address,
-        provider: Option<Provider<Http>>,
-        testnet: bool,
-        number: u8,
-    ) -> Self {
+    pub fn new(contract: Address, provider: Option<Provider<Http>>, testnet: bool) -> Self {
         Self {
             contract,
             provider,
             testnet,
-            number,
         }
     }
 }
@@ -56,9 +49,8 @@ pub fn validate(args: &ArgMatches) -> Result<CommonArgs, io::Error> {
     match args.value_of("contract") {
         Some(contract_arg) => match contract_arg.parse::<Address>() {
             Ok(contract) => {
-                let number = args.value_of_t("number").unwrap_or_else(|e| e.exit());
                 let testnet = args.is_present("testnet");
-                Ok(CommonArgs::new(contract, provider, testnet, number))
+                Ok(CommonArgs::new(contract, provider, testnet))
             }
             Err(e) => Err(io::Error::new(
                 io::ErrorKind::InvalidData,

@@ -6,12 +6,15 @@ use std::io;
 
 pub struct FloorArgs {
     common: common::CommonArgs,
+    number: u8,
 }
 
+// TODO: moved number from common
 pub fn validate(args: &ArgMatches) -> Result<FloorArgs, io::Error> {
     match common::validate(args) {
         Ok(common_args) => Ok(FloorArgs {
             common: common_args,
+            number: 0,
         }),
         Err(e) => Err(e),
     }
@@ -26,7 +29,7 @@ pub fn run(args: FloorArgs) {
 
     // floor api is syntactice sugar that builds request for you
     // send request and take action
-    match api.get_floor(args.common.contract, args.common.number) {
+    match api.get_floor(args.common.contract, args.number) {
         Ok(data) => dbg!(data),
         Err(e) => {
             dbg!(e);

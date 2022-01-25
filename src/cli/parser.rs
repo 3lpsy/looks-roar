@@ -44,7 +44,13 @@ pub fn parse() -> clap::ArgMatches {
             App::new("top")
                 .about("list top rarities")
                 .arg(arg_provider.clone())
-                .arg(arg_number.clone())
+                .arg(arg_testnet.clone())
+                .arg(arg_contract.clone()),
+        )
+        .subcommand(
+            App::new("type")
+                .about("list type rarities")
+                .arg(arg_provider.clone())
                 .arg(arg_testnet.clone())
                 .arg(arg_contract.clone()),
         )
