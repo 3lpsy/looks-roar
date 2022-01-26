@@ -1,11 +1,6 @@
 use ethers::contract::abigen;
 
-abigen!(
-    GenericNFT,
-    r#"[
-        function supportsInterface(bytes4 interfaceId) external view returns (bool)
-    ]"#
-);
+pub trait NFTContract<M> {}
 
 abigen!(
     ERC721,
@@ -15,6 +10,8 @@ abigen!(
     ]"#
 );
 
+impl NFTContract<M> for ERC721<M> {}
+
 abigen!(
     ERC1155,
     r#"[
@@ -22,3 +19,5 @@ abigen!(
         function supportsInterface(bytes4 interfaceId) external view returns (bool)
     ]"#
 );
+
+impl NFTContract<M> for ERC1155<M> {}

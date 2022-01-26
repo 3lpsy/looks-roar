@@ -1,79 +1,40 @@
-use crate::contract::{abi, constants};
+use crate::contract::{abi, constants, types, wrapper};
 use ethers::core::types::Address;
 use ethers::providers::{Http, Provider};
 use std::io;
 use std::sync::Arc;
 
-#[derive(Clone, Debug)]
-pub enum NFTType {
-    ERC721,
-    ERC1155,
+// what is M
+
+pub async fn build(address: Address, provider: Provider<Http>) -> Result<(), io::Error> {
+    Ok(())
 }
 
-// what is M
 pub struct NFT<M> {
-    erc721: Option<abi::ERC721<M>>,
-    erc1155: Option<abi::ERC1155<M>>,
-    pub iface: NFTType,
+    imp: Box<dyn abi::NFTContract<M>>,
 }
 
 impl<M> NFT<M> {
-    pub fn new_erc721(contract: abi::ERC721<M>) -> Self {
-        Self {
-            erc721: Some(contract),
-            erc1155: None,
-            iface: NFTType::ERC721,
-        }
+    pub fn guess_type(x: &abi::ERC721<Provider<Http>>) -> Result<types::NFTIface, io::Error> {
+        Ok(types::NFTIface::ERC721)
     }
-    pub fn new_erc1155(contract: abi::ERC1155<M>) -> Self {
-        Self {
-            erc1155: Some(contract),
-            erc721: None,
-            iface: NFTType::ERC1155,
-        }
-    }
-}
 
-pub async fn build_any(
-    address: Address,
-    provider: Provider<Http>,
-) -> Result<NFT<Provider<Http>>, io::Error> {
-    let provarc = Arc::new(provider);
-    let iface = abi::GenericNFT::new(address, provarc.clone());
-    match iface
-        .supports_interface(constants::ERC1155_IFACE_ID)
-        .call()
-        .await
-    {
-        Ok(answer) => match answer {
-        true => {
-                println!("Supports 1155");
-                let contract = abi::ERC1155::new(address, provarc.clone());
-                Ok(NFT::new_erc1155(contract))
-            }
-            false => {
-                match iface
-                    .supports_interface(constants::ERC721_IFACE_ID)
-                    .call()
-                    .await
-                {
-                    Ok(answer) => match answer {
-                        true => {
-                            println!("Supports 721");
-                            let contract = abi::ERC721::new(address, provarc.clone());
-                            Ok(NFT::new_erc721(contract))
-                        }
-                        false => {
-                            panic!("Bad Supports Interface Answer");
-                        }
-                    },
-                    Err(_) => panic!("Bad Supports Interface Answer"),
-                }
-            }
-        },
-        Err(e) => {
-            // what to do
-            panic!("Bad Supports Interface Answer");
+    pub fn build(address: Address, provider: Provider<Http>) -> Result<Self, io::Error> {
+        let prov = Arc::new(provider);
+        let iface = abi::ERC721::new(address, prov.clone());
+        match Self::guess_type(&iface) {
+            Ok(answer) => match answer {
+                types::NFTIface::ERC721 => Ok(Self {
+                    imp: Box::new(iface),
+                }),
+                types::NFTIface::ERC1155 => Ok(Self {
+                    imp: Box::new(abi::ERC1155::new(address, prov.clone())),
+                }),
+            },
+            Err(e) => Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("Cannot initialize provider from value: {:?}", e),
+            )),
         }
     }
 }
