@@ -10,11 +10,20 @@ pub async fn build(address: Address, provider: Provider<Http>) -> Result<(), io:
     Ok(())
 }
 
-pub struct NFT<M> {
-    imp: Box<dyn abi::NFTContract<M>>,
+pub struct NFT {
+    imp: Box<dyn abi::NFTContract>,
 }
 
-impl<M> NFT<M> {
+impl NFT {
+    pub fn supports_interface(&self, identifier: [u8; 4]) -> bool {
+        // not defined
+        // but how to define on trait when its already defined it its struct
+        match self.imp.supports_interface(identifier) {
+            Ok(answer) => answer,
+            Err(e) => false,
+        }
+    }
+
     pub fn guess_type(x: &abi::ERC721<Provider<Http>>) -> Result<types::NFTIface, io::Error> {
         Ok(types::NFTIface::ERC721)
     }

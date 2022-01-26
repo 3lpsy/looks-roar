@@ -1,6 +1,8 @@
+use core::fmt;
+
 use ethers::contract::abigen;
 
-pub trait NFTContract<M> {}
+pub trait NFTContract {}
 
 abigen!(
     ERC721,
@@ -10,7 +12,7 @@ abigen!(
     ]"#
 );
 
-impl NFTContract<M> for ERC721<M> {}
+impl<M> NFTContract for ERC721<M> {}
 
 abigen!(
     ERC1155,
@@ -20,4 +22,4 @@ abigen!(
     ]"#
 );
 
-impl NFTContract<M> for ERC1155<M> {}
+impl<M> NFTContract for ERC1155<M> {}
