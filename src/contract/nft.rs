@@ -10,35 +10,31 @@ pub async fn build(address: Address, provider: Provider<Http>) -> Result<(), io:
     Ok(())
 }
 
-pub struct NFT {
-    imp: Box<dyn abi::NFTContract>,
+pub struct NFT<M> {
+    imp: abi::NFTAbi<M>,
+    iface: types::NFTIface,
 }
 
-impl NFT {
-    pub fn supports_interface(&self, identifier: [u8; 4]) -> bool {
-        // not defined
-        // but how to define on trait when its already defined it its struct
-        match self.imp.supports_interface(identifier) {
-            Ok(answer) => answer,
-            Err(e) => false,
-        }
-    }
-
-    pub fn guess_type(x: &abi::ERC721<Provider<Http>>) -> Result<types::NFTIface, io::Error> {
-        Ok(types::NFTIface::ERC721)
-    }
-
+impl<M> NFT<M> {
     pub fn build(address: Address, provider: Provider<Http>) -> Result<Self, io::Error> {
         let prov = Arc::new(provider);
-        let iface = abi::ERC721::new(address, prov.clone());
-        match Self::guess_type(&iface) {
+        let iface = abi::NFTAbi::new(address, prov.clone(), types::NFTIface::ERC721);
+        match iface::guess_type(&iface) {
             Ok(answer) => match answer {
                 types::NFTIface::ERC721 => Ok(Self {
-                    imp: Box::new(iface),
+                    imp: iface,
+                    iface: types::NFTIface::ERC721,
                 }),
-                types::NFTIface::ERC1155 => Ok(Self {
-                    imp: Box::new(abi::ERC1155::new(address, prov.clone())),
-                }),
+                types::NFTIface::ERC1155 => {
+                    let imp = abi::NFTAbi::new(
+                        abi::ERC1155::new(address, prov.clone()),
+                        types::NFTIface::ERC1155,
+                    );
+                    Ok(Self {
+                        imp: imp,
+                        iface: types::NFTIface::ERC1155,
+                    })
+                }
             },
             Err(e) => Err(io::Error::new(
                 io::ErrorKind::InvalidData,

@@ -1,8 +1,11 @@
 use core::fmt;
+use std::sync::Arc;
 
 use ethers::contract::abigen;
+use ethers::core::types::Address;
+use ethers::providers::{Http, Provider};
 
-pub trait NFTContract {}
+use super::types;
 
 abigen!(
     ERC721,
@@ -12,8 +15,6 @@ abigen!(
     ]"#
 );
 
-impl<M> NFTContract for ERC721<M> {}
-
 abigen!(
     ERC1155,
     r#"[
@@ -22,4 +23,12 @@ abigen!(
     ]"#
 );
 
-impl<M> NFTContract for ERC1155<M> {}
+pub struct NFTAbi<M> {
+    erc721: Option<ERC721<M>>,
+    erc1155: Option<ERC1155<M>>,
+    iface: types::NFTIface,
+}
+
+impl<M> NFTAbi<M> {
+    pub fn new(address: Address, provider: Arc<Provider<Http>>, iface: types::NFTIface) -> Self {}
+}

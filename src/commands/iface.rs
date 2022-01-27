@@ -15,5 +15,10 @@ pub fn validate(args: &ArgMatches) -> Result<IfaceArgs, io::Error> {
     }
 }
 pub async fn run(args: IfaceArgs) -> Result<(), io::Error> {
+    let address = args.common.contract;
+    let provider = args.common.provider.unwrap();
+    // TODO: need to confirm args.provider exists and is provided!
+    let x = nft::NFT::build(address, provider);
+    println!(x.iface);
     Ok(())
 }
