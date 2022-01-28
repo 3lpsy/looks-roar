@@ -1,4 +1,5 @@
 use crate::commands::common;
+use crate::contract::nft;
 use clap::ArgMatches;
 use std::io;
 
@@ -18,7 +19,13 @@ pub async fn run(args: IfaceArgs) -> Result<(), io::Error> {
     let address = args.common.contract;
     let provider = args.common.provider.unwrap();
     // TODO: need to confirm args.provider exists and is provided!
-    let x = nft::NFT::build(address, provider);
-    println!(x.iface);
+    let imp = match nft::NFT::build(address, provider).await {
+        Ok(imp) => imp,
+        Err(e) => {
+            println!("No NFT interface found supported: {:?}", e);
+            std::process::exit(1);
+        }
+    };
+    println!("{:?}", imp.iface());
     Ok(())
 }

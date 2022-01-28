@@ -26,10 +26,15 @@ pub async fn run(args: TopArgs) -> Result<(), io::Error> {
     //
     let address = args.common.contract;
     let provider = args.common.provider.unwrap();
-    // TODO: need to confirm args.provider exists and is provided!
 
-    let x = nft::NFT::build(address, provider);
-    //let nft = nft::build_any(address, provider).await?;
-    // dbg!(nft.unwrap().iface);
-    unimplemented!();
+    // TODO: need to confirm args.provider exists and is provided!
+    let imp = match nft::NFT::build(address, provider).await {
+        Ok(imp) => imp,
+        Err(e) => {
+            println!("No NFT interface found supported");
+            std::process::exit(1);
+        }
+    };
+    println!("{:?}", imp.iface());
+    Ok(())
 }
