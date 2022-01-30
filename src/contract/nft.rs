@@ -1,21 +1,17 @@
 use crate::contract::{abi, types};
 use ethers::core::types::Address;
-use ethers::providers::{Http, Provider};
+use ethers::providers::{Middleware, Provider};
 use std::io;
 use std::sync::Arc;
 
 // what is M
 
-pub async fn build(address: Address, provider: Provider<Http>) -> Result<(), io::Error> {
-    Ok(())
-}
-
 pub struct NFT<M> {
     imp: abi::NFTAbi<M>,
 }
 
-impl NFT<Provider<Http>> {
-    pub async fn build(address: Address, provider: Arc<Provider<Http>>) -> Result<Self, io::Error> {
+impl<M: Middleware> NFT<M> {
+    pub async fn build(address: Address, provider: Arc<M>) -> Result<Self, io::Error> {
         match abi::NFTAbi::new(address, provider.clone()).await {
             Ok(imp) => Ok(Self { imp }),
             Err(e) => Err(io::Error::new(

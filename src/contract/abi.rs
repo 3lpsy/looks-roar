@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use ethers::contract::abigen;
 use ethers::core::types::Address;
-use ethers::providers::{Http, Provider};
+use ethers::providers::{Middleware, Provider};
 
 use super::{constants, types};
 use std::io;
@@ -29,12 +29,9 @@ pub struct NFTAbi<M> {
     pub iface: types::NFTIface,
 }
 
-impl NFTAbi<Provider<Http>> {
+impl<M: Middleware> NFTAbi<M> {
     // just handle both cases
-    pub async fn guess_type(
-        address: Address,
-        provider: Arc<Provider<Http>>,
-    ) -> Option<types::NFTIface> {
+    pub async fn guess_type(address: Address, provider: Arc<M>) -> Option<types::NFTIface> {
         let imp = ERC721::new(address, provider);
         match imp
             .supports_interface(constants::ERC1155_IFACE_ID)
@@ -59,7 +56,7 @@ impl NFTAbi<Provider<Http>> {
         }
     }
 
-    pub async fn new(address: Address, provider: Arc<Provider<Http>>) -> Result<Self, io::Error> {
+    pub async fn new(address: Address, provider: Arc<M>) -> Result<Self, io::Error> {
         let iface = match Self::guess_type(address, provider.clone()).await {
             Some(found) => found,
             None => {
