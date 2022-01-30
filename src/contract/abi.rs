@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use ethers::contract::abigen;
 use ethers::core::types::Address;
-use ethers::providers::{Http, Middleware, Provider};
+use ethers::providers::{Http, Provider};
 
 use super::{constants, types};
 use std::io;

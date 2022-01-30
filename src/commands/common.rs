@@ -3,17 +3,24 @@ use ethers::core::types::Address;
 use ethers::providers::{Http, Provider};
 use std::convert::TryFrom;
 use std::env;
-use std::io;
+use std::fs::File;
+use std::io::{self, prelude::*, BufReader};
+
+#[derive(Debug)]
+pub enum ContractArg {
+    Address(Address),
+    AddressList(Vec<Address>),
+}
 
 #[derive(Debug)]
 pub struct CommonArgs {
-    pub contract: Address,
+    pub contract: ContractArg,
     pub provider: Option<Provider<Http>>,
     pub testnet: bool,
 }
 
 impl CommonArgs {
-    pub fn new(contract: Address, provider: Option<Provider<Http>>, testnet: bool) -> Self {
+    pub fn new(contract: ContractArg, provider: Option<Provider<Http>>, testnet: bool) -> Self {
         Self {
             contract,
             provider,
@@ -50,12 +57,38 @@ pub fn validate(args: &ArgMatches) -> Result<CommonArgs, io::Error> {
         Some(contract_arg) => match contract_arg.parse::<Address>() {
             Ok(contract) => {
                 let testnet = args.is_present("testnet");
-                Ok(CommonArgs::new(contract, provider, testnet))
+                Ok(CommonArgs::new(
+                    ContractArg::Address(contract),
+                    provider,
+                    testnet,
+                ))
             }
-            Err(e) => Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("Bad contract address: {:?}", e),
-            )),
+            Err(e) => match File::open(contract_arg) {
+                Ok(f) => {
+                    let testnet = args.is_present("testnet");
+                    let buffer = BufReader::new(f);
+                    // TODO: find a cooler/cleaner way to do this
+                    // TODO: parse failures don't bubble/report
+                    let addrs: Vec<Address> = buffer
+                        .lines()
+                        .filter(|line| line.is_ok())
+                        .map(|line| line.unwrap())
+                        .map(|line| line.parse::<Address>())
+                        .filter(|line| line.is_ok())
+                        .map(|line| line.unwrap())
+                        .collect();
+
+                    Ok(CommonArgs::new(
+                        ContractArg::AddressList(addrs),
+                        provider,
+                        testnet,
+                    ))
+                }
+                Err(e) => Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Bad contract address: {:?}", e),
+                )),
+            },
         },
         None => Err(io::Error::new(
             io::ErrorKind::NotFound,

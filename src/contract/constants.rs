@@ -1,4 +1,4 @@
-use hex::FromHex;
+// use hex::FromHex;
 
 // pub const ERC721_IFACE_ID: [u8; 4] = <[u8; 4]>::from_hex("01ffc9a7").unwrap();
 pub const ERC721_IFACE_ID: [u8; 4] = [0x01, 0xff, 0xc9, 0xa7];
