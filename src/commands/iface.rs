@@ -23,7 +23,7 @@ pub async fn run_for_address(
     address: Address,
     provider: Arc<Provider<Http>>,
 ) -> Result<(), io::Error> {
-    let imp = match nft::NFT::build(address.clone(), provider).await {
+    let mut imp = match nft::NFT::build(address.clone(), provider).await {
         Ok(imp) => imp,
         Err(e) => {
             println!("No NFT interface found supported: {:?}", e);
@@ -31,7 +31,18 @@ pub async fn run_for_address(
         }
     };
     // TODO: need to confirm args.provider exists and is provided!
-    println!("{:?}:{:?}", address, imp.iface());
+
+    let mut opt_str: String = String::new();
+    if !imp.opt_ifaces().is_empty() {
+        let opt_joined = imp
+            .opt_ifaces()
+            .iter()
+            .fold(String::new(), |carry, item| carry + "," + &item.to_string());
+        opt_str = format!(" ({})", opt_joined.trim_matches(','));
+    }
+
+    println!("{:?}:{:?}{}", address, imp.iface(), opt_str);
+    // TODO: check for other implementations
     Ok(())
 }
 

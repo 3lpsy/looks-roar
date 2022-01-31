@@ -12,7 +12,7 @@ pub struct NFT<M> {
 
 impl<M: Middleware> NFT<M> {
     pub async fn build(address: Address, provider: Arc<M>) -> Result<Self, io::Error> {
-        match abi::NFTAbi::new(address, provider.clone()).await {
+        match abi::NFTAbi::build(address, provider.clone()).await {
             Ok(imp) => Ok(Self { imp }),
             Err(e) => Err(io::Error::new(
                 io::ErrorKind::InvalidData,
@@ -22,6 +22,9 @@ impl<M: Middleware> NFT<M> {
     }
     pub fn iface(&self) -> &types::NFTIface {
         &self.imp.iface
+    }
+    pub fn opt_ifaces(&self) -> &Vec<types::NFTOptIface> {
+        &self.imp.opt_ifaces
     }
     pub async fn load_metadata(&mut self) -> Result<(), io::Error> {
         Ok(())

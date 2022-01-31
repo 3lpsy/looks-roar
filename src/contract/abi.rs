@@ -7,6 +7,7 @@ use ethers::providers::{Middleware, Provider};
 use super::{constants, types};
 use std::io;
 
+// TODO: make these implement the same trait
 abigen!(
     ERC721,
     r#"[
@@ -27,6 +28,7 @@ pub struct NFTAbi<M> {
     erc721: Option<ERC721<M>>,
     erc1155: Option<ERC1155<M>>,
     pub iface: types::NFTIface,
+    pub opt_ifaces: Vec<types::NFTOptIface>,
 }
 
 impl<M: Middleware> NFTAbi<M> {
@@ -49,14 +51,28 @@ impl<M: Middleware> NFTAbi<M> {
                         true => Some(types::NFTIface::ERC721),
                         false => None,
                     },
-                    Err(e) => None,
+                    Err(_e) => None,
                 },
             },
-            Err(e) => None,
+            Err(_e) => None,
         }
     }
 
-    pub async fn new(address: Address, provider: Arc<M>) -> Result<Self, io::Error> {
+    pub fn new(
+        erc721: Option<ERC721<M>>,
+        erc1155: Option<ERC1155<M>>,
+        iface: types::NFTIface,
+        opt_ifaces: Vec<types::NFTOptIface>,
+    ) -> Self {
+        Self {
+            erc721,
+            erc1155,
+            iface,
+            opt_ifaces,
+        }
+    }
+
+    pub async fn build(address: Address, provider: Arc<M>) -> Result<Self, io::Error> {
         let iface = match Self::guess_type(address, provider.clone()).await {
             Some(found) => found,
             None => {
@@ -68,16 +84,62 @@ impl<M: Middleware> NFTAbi<M> {
         };
 
         match iface {
-            types::NFTIface::ERC721 => Ok(Self {
-                erc721: Some(ERC721::new(address, provider)),
-                erc1155: None,
-                iface,
-            }),
-            types::NFTIface::ERC1155 => Ok(Self {
-                erc721: None,
-                erc1155: Some(ERC1155::new(address, provider)),
-                iface,
-            }),
+            types::NFTIface::ERC721 => {
+                let mut imp = Self::new(Some(ERC721::new(address, provider)), None, iface, vec![]);
+                imp.load_opt_interfaces().await;
+                Ok(imp)
+            }
+            types::NFTIface::ERC1155 => {
+                let mut imp = Self::new(None, Some(ERC1155::new(address, provider)), iface, vec![]);
+                imp.load_opt_interfaces().await;
+                Ok(imp)
+            }
+        }
+    }
+    // TODO: handle both normal iface / opt iface
+    async fn load_opt_interfaces(&mut self) {
+        let candidates = vec![
+            types::NFTOptIface::ERC721Enumerable,
+            types::NFTOptIface::ERC721Metadata,
+            types::NFTOptIface::ERC1155MetadataUri,
+        ];
+        for candidate in candidates {
+            if self.is_interface_supported(candidate).await {
+                // TODO: can i avoid this clone?
+                self.opt_ifaces.push(candidate);
+            }
+        }
+        // can ERC1155's support optional ERC721 interfaces?
+    }
+
+    async fn is_interface_supported(&self, iface: types::NFTOptIface) -> bool {
+        match self.iface {
+            types::NFTIface::ERC721 => {
+                match self
+                    .erc721
+                    .as_ref()
+                    .unwrap()
+                    .supports_interface(iface.id())
+                    .call()
+                    .await
+                {
+                    Ok(answer) => answer,
+                    Err(_e) => false,
+                }
+            }
+            types::NFTIface::ERC1155 => {
+                match self
+                    .erc1155
+                    .as_ref()
+                    .unwrap()
+                    .supports_interface(iface.id())
+                    .call()
+                    .await
+                {
+                    Ok(answer) => answer,
+                    Err(_e) => false,
+                }
+            }
         }
     }
 }

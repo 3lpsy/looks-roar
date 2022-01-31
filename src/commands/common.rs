@@ -5,6 +5,7 @@ use std::convert::TryFrom;
 use std::env;
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
+use std::path::Path;
 
 #[derive(Debug)]
 pub enum ContractArg {
@@ -29,7 +30,40 @@ impl CommonArgs {
     }
 }
 
+fn load_dotenv_line(line: String) {
+    match line.split_once("=") {
+        Some(kv) => {
+            let val = kv.1.trim_matches('"');
+            println!("Setting env variable: {:?}", kv.0);
+            std::env::set_var(kv.0, val)
+        }
+        None => {
+            println!("Failed to parse env line");
+        }
+    }
+}
+
+fn load_dotenv(path: &str) {
+    if Path::new(path).exists() {
+        match File::open(path) {
+            Ok(f) => {
+                let b = BufReader::new(f);
+                for (_index, line) in b.lines().enumerate() {
+                    let line = line.unwrap(); // Ignore errors.
+                    if !line.starts_with('#') {
+                        load_dotenv_line(line);
+                    }
+                }
+            }
+            Err(_) => {
+                println!("Failed to read env file: {:?}", path);
+            }
+        }
+    }
+}
+
 pub fn validate(args: &ArgMatches) -> Result<CommonArgs, io::Error> {
+    load_dotenv("./.env");
     // i don't like this
     let mut provider: Option<Provider<Http>> = None;
     let mut provider_url = String::new();
@@ -53,17 +87,25 @@ pub fn validate(args: &ArgMatches) -> Result<CommonArgs, io::Error> {
             }
         }
     }
-    match args.value_of("contract") {
-        Some(contract_arg) => match contract_arg.parse::<Address>() {
-            Ok(contract) => {
+
+    let mut contract: Option<String> = None;
+    if args.is_present("contract") {
+        contract = Some(args.value_of("contract").unwrap().to_string());
+    } else if env::var("LOOKS_RARE_CONTRACT").is_ok() {
+        contract = Some(env::var("LOOKS_RARE_CONTRACT").unwrap());
+    }
+
+    match contract {
+        Some(arg) => match arg.parse::<Address>() {
+            Ok(val) => {
                 let testnet = args.is_present("testnet");
                 Ok(CommonArgs::new(
-                    ContractArg::Address(contract),
+                    ContractArg::Address(val),
                     provider,
                     testnet,
                 ))
             }
-            Err(e) => match File::open(contract_arg) {
+            Err(_e) => match File::open(arg) {
                 Ok(f) => {
                     let testnet = args.is_present("testnet");
                     let buffer = BufReader::new(f);
