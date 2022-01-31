@@ -57,8 +57,8 @@ pub fn parse() -> clap::ArgMatches {
                 .arg(arg_contract.clone()),
         )
         .subcommand(
-            App::new("type")
-                .about("list type rarities")
+            App::new("iface")
+                .about("list supported interfaces")
                 .arg(arg_provider.clone())
                 .arg(arg_testnet.clone())
                 .arg(arg_contract.clone())
