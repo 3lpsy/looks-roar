@@ -11,3 +11,6 @@ clap = { version = "3.0.0", features = ["derive"] }
 reqwest = { version = "*", features = ["gzip"]}
 hex = {version = "*"}
 tokio = { version = "1.5", features = ["macros", "rt-multi-thread"] }
+sled = {version = "*" }
+serde = { version = "*", features = ["derive"] }
+bincode = { version = "*" }

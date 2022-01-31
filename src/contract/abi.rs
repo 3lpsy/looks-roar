@@ -59,16 +59,24 @@ impl<M: Middleware> NFTAbi<M> {
     }
 
     pub fn new(
-        erc721: Option<ERC721<M>>,
-        erc1155: Option<ERC1155<M>>,
+        address: Address,
+        provider: Arc<M>,
         iface: types::NFTIface,
         opt_ifaces: Vec<types::NFTOptIface>,
     ) -> Self {
-        Self {
-            erc721,
-            erc1155,
-            iface,
-            opt_ifaces,
+        match iface {
+            types::NFTIface::ERC721 => Self {
+                erc721: Some(ERC721::new(address, provider)),
+                erc1155: None,
+                iface,
+                opt_ifaces,
+            },
+            types::NFTIface::ERC1155 => Self {
+                erc721: None,
+                erc1155: Some(ERC1155::new(address, provider)),
+                iface,
+                opt_ifaces,
+            },
         }
     }
 
@@ -82,19 +90,9 @@ impl<M: Middleware> NFTAbi<M> {
                 ));
             }
         };
-
-        match iface {
-            types::NFTIface::ERC721 => {
-                let mut imp = Self::new(Some(ERC721::new(address, provider)), None, iface, vec![]);
-                imp.load_opt_interfaces().await;
-                Ok(imp)
-            }
-            types::NFTIface::ERC1155 => {
-                let mut imp = Self::new(None, Some(ERC1155::new(address, provider)), iface, vec![]);
-                imp.load_opt_interfaces().await;
-                Ok(imp)
-            }
-        }
+        let mut imp = Self::new(address, provider, iface, vec![]);
+        imp.load_opt_interfaces();
+        Ok(imp)
     }
     // TODO: handle both normal iface / opt iface
     async fn load_opt_interfaces(&mut self) {

@@ -22,8 +22,9 @@ pub fn validate(args: &ArgMatches) -> Result<IfaceArgs, io::Error> {
 pub async fn run_for_address(
     address: Address,
     provider: Arc<Provider<Http>>,
+    cache: Option<sled::Db>,
 ) -> Result<(), io::Error> {
-    let mut imp = match nft::NFT::build(address.clone(), provider).await {
+    let mut imp = match nft::NFT::build(address.clone(), provider, cache).await {
         Ok(imp) => imp,
         Err(e) => {
             println!("No NFT interface found supported: {:?}", e);
@@ -52,14 +53,16 @@ pub async fn run(args: IfaceArgs) -> Result<(), io::Error> {
             // TODO: handle
             let provider = args.common.provider.unwrap();
             let provider = Arc::new(provider);
-            run_for_address(address, provider).await
+            let cache = args.common.cache;
+            run_for_address(address, provider, cache).await
         }
         common::ContractArg::AddressList(addresses) => {
             // TODO: handle
             let provider = args.common.provider.unwrap();
             let provider = Arc::new(provider);
             for address in addresses {
-                let _res = run_for_address(address, provider.clone()).await;
+                // TODO: handle cache for multiple
+                let _res = run_for_address(address, provider.clone(), None).await;
             }
             Ok(())
         }
