@@ -91,7 +91,7 @@ impl<M: Middleware> NFTAbi<M> {
             }
         };
         let mut imp = Self::new(address, provider, iface, vec![]);
-        imp.load_opt_interfaces();
+        imp.load_opt_interfaces().await;
         Ok(imp)
     }
     // TODO: handle both normal iface / opt iface
