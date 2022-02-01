@@ -26,7 +26,7 @@ async fn main() -> Result<(), io::Error> {
                 println!("Error: {:?}", e)
             }
         },
-        Some(("type", matches)) => match iface::validate(matches) {
+        Some(("iface", matches)) => match iface::validate(matches) {
             Ok(command_args) => {
                 iface::run(command_args).await?;
             }

@@ -23,6 +23,10 @@ pub fn parse() -> clap::ArgMatches {
         .long("cache")
         .help("path to cache file")
         .takes_value(true);
+    let arg_fresh = Arg::new("fresh")
+        .short('f')
+        .long("fresh")
+        .help("sync fresh data to cache");
     let arg_no_cache = Arg::new("no_cache")
         .short('N')
         .long("no-cache")
@@ -63,6 +67,7 @@ pub fn parse() -> clap::ArgMatches {
                 .arg(arg_testnet.clone())
                 .arg(arg_contract.clone())
                 .arg(arg_cache.clone())
+                .arg(arg_fresh.clone())
                 .arg(arg_no_cache.clone()),
         )
         .get_matches()

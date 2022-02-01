@@ -1,3 +1,4 @@
+use crate::cache::Cache;
 use crate::commands::common;
 use crate::contract::nft;
 use clap::ArgMatches;
@@ -22,9 +23,10 @@ pub fn validate(args: &ArgMatches) -> Result<IfaceArgs, io::Error> {
 pub async fn run_for_address(
     address: Address,
     provider: Arc<Provider<Http>>,
-    cache: Option<sled::Db>,
+    db: Option<Cache>,
+    fresh: bool,
 ) -> Result<(), io::Error> {
-    let mut imp = match nft::NFT::build(address.clone(), provider, cache).await {
+    let imp = match nft::NFT::build(address.clone(), provider, db, fresh).await {
         Ok(imp) => imp,
         Err(e) => {
             println!("No NFT interface found supported: {:?}", e);
@@ -53,16 +55,17 @@ pub async fn run(args: IfaceArgs) -> Result<(), io::Error> {
             // TODO: handle
             let provider = args.common.provider.unwrap();
             let provider = Arc::new(provider);
-            let cache = args.common.cache;
-            run_for_address(address, provider, cache).await
+            let db = args.common.db;
+            run_for_address(address, provider, db, args.common.fresh).await
         }
         common::ContractArg::AddressList(addresses) => {
             // TODO: handle
             let provider = args.common.provider.unwrap();
             let provider = Arc::new(provider);
+            let fresh = args.common.fresh;
             for address in addresses {
                 // TODO: handle cache for multiple
-                let _res = run_for_address(address, provider.clone(), None).await;
+                let _res = run_for_address(address, provider.clone(), None, fresh).await;
             }
             Ok(())
         }

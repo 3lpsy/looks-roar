@@ -1,7 +1,7 @@
+use crate::cache::Cache;
 use clap::ArgMatches;
 use ethers::core::types::Address;
 use ethers::providers::{Http, Provider};
-use sled;
 use std::convert::TryFrom;
 use std::env;
 use std::fs::File;
@@ -19,7 +19,8 @@ pub struct CommonArgs {
     pub contract: ContractArg,
     pub provider: Option<Provider<Http>>,
     pub testnet: bool,
-    pub cache: Option<sled::Db>,
+    pub db: Option<Cache>,
+    pub fresh: bool,
 }
 
 impl CommonArgs {
@@ -27,13 +28,15 @@ impl CommonArgs {
         contract: ContractArg,
         provider: Option<Provider<Http>>,
         testnet: bool,
-        cache: Option<sled::Db>,
+        db: Option<Cache>,
+        fresh: bool,
     ) -> Self {
         Self {
             contract,
             provider,
             testnet,
-            cache,
+            db,
+            fresh,
         }
     }
 }
@@ -83,7 +86,9 @@ pub fn validate(args: &ArgMatches) -> Result<CommonArgs, io::Error> {
         provider_url = env::var("ETHEREUM_RPC_URL").unwrap();
     }
 
+    // define caching setup variables
     let mut cache_path: Option<String> = None;
+    let fresh: bool = args.is_present("fresh");
     if args.is_present("cache") {
         cache_path = Some(args.value_of("cache").unwrap().to_string());
     } else if env::var("LOOKS_ROAR_CACHE").is_ok() {
@@ -94,9 +99,9 @@ pub fn validate(args: &ArgMatches) -> Result<CommonArgs, io::Error> {
         cache_path = None;
     }
 
-    let mut cache: Option<sled::Db> = None;
+    let mut db: Option<Cache> = None;
     if cache_path.is_some() {
-        cache = match sled::open(cache_path.unwrap()) {
+        db = match Cache::open(&cache_path.unwrap()) {
             Ok(db) => Some(db),
             Err(e) => {
                 // TODO: better handling
@@ -136,7 +141,8 @@ pub fn validate(args: &ArgMatches) -> Result<CommonArgs, io::Error> {
                     ContractArg::Address(val),
                     provider,
                     testnet,
-                    cache,
+                    db,
+                    fresh,
                 ))
             }
             Err(_e) => match File::open(arg) {
@@ -158,7 +164,8 @@ pub fn validate(args: &ArgMatches) -> Result<CommonArgs, io::Error> {
                         ContractArg::AddressList(addrs),
                         provider,
                         testnet,
-                        cache,
+                        db,
+                        fresh,
                     ))
                 }
                 Err(e) => Err(io::Error::new(
