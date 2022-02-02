@@ -5,7 +5,7 @@ use sled::{self, IVec};
 use std::error::Error;
 use std::fmt::Debug;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Cache {
     imp: sled::Db,
 }

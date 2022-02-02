@@ -26,7 +26,7 @@ pub async fn run_for_address(
     db: Option<Cache>,
     fresh: bool,
 ) -> Result<(), io::Error> {
-    let imp = match nft::NFT::build(address.clone(), provider, db, fresh).await {
+    let imp = match nft::NFT::build(address, provider, db, fresh).await {
         Ok(imp) => imp,
         Err(e) => {
             println!("No NFT interface found supported: {:?}", e);
@@ -65,7 +65,8 @@ pub async fn run(args: IfaceArgs) -> Result<(), io::Error> {
             let fresh = args.common.fresh;
             for address in addresses {
                 // TODO: handle cache for multiple
-                let _res = run_for_address(address, provider.clone(), None, fresh).await;
+                let db = args.common.db.clone();
+                let _res = run_for_address(address, provider.clone(), db, fresh).await;
             }
             Ok(())
         }
