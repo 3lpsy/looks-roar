@@ -2,11 +2,12 @@ use std::sync::Arc;
 
 use super::constants;
 use crate::contract::types::{NFTIface, NFTOptIface};
+use crate::utils::AppError;
 use ethers::contract::abigen;
 use ethers::core::types::Address;
 use ethers::providers::Middleware;
 use std::error::Error;
-use std::io;
+use super::queries;
 
 abigen!(
     ERC165,
@@ -127,20 +128,27 @@ impl<M: Middleware> NFTAbi<M> {
         }
     }
 
-    pub async fn build(address: Address, provider: Arc<M>) -> Result<Self, io::Error> {
+    pub async fn build(address: Address, provider: Arc<M>) -> Result<Self, Box<dyn Error>> {
         let iface = match Self::guess_type(address, provider.clone()).await {
             Some(found) => found,
             None => {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidInput,
-                    "No iface found for address",
-                ));
+                let m = format!("No iface found for address: {:?}", address);
+                return Err(AppError::boxed(m, 0));
             }
         };
         let mut imp = Self::new(address, provider, iface, vec![]);
         imp.load_opt_interfaces().await;
         Ok(imp)
     }
+
+    pub async fn fetch_tokens(&self) -> Result<Vec<String>, Box<dyn Error>> {
+        if self.has_opt_interface(NFTOptIface::ERC721Enumerable) {
+            let tokens = queries::ERC721EnumerableQuery::fetch_tokens(self.to_erc721_enumerable()).await?;
+            return Ok(tokens);
+        }
+        unimplemented!();
+    }
+
     // TODO: handle both normal iface / opt iface
     async fn load_opt_interfaces(&mut self) {
         let candidates = vec![
@@ -149,7 +157,7 @@ impl<M: Middleware> NFTAbi<M> {
             NFTOptIface::ERC1155MetadataUri,
         ];
         for candidate in candidates {
-            if self.is_interface_supported(candidate).await {
+            if self.query_interface_support(candidate).await {
                 // TODO: can i avoid this clone?
                 self.opt_ifaces.push(candidate);
             }
@@ -157,7 +165,11 @@ impl<M: Middleware> NFTAbi<M> {
         // can ERC1155's support optional ERC721 interfaces?
     }
 
-    async fn is_interface_supported(&self, iface: NFTOptIface) -> bool {
+    pub fn has_opt_interface(&self, iface: NFTOptIface) -> bool {
+        self.opt_ifaces.contains(&iface)
+    }
+
+    async fn query_interface_support(&self, iface: NFTOptIface) -> bool {
         match self.to_erc165().supports_interface(iface.id()).call().await {
             Ok(answer) => answer,
             Err(_e) => false,
@@ -179,5 +191,8 @@ impl<M: Middleware> NFTAbi<M> {
 
     fn to_erc165(&self) -> ERC165<M> {
         ERC165::new(self.address(), self.provider.clone())
+    }
+    fn to_erc721_enumerable(&self) -> ERC721Enumerable<M> {
+        ERC721Enumerable::new(self.address(), self.provider.clone())
     }
 }

@@ -3,7 +3,7 @@ use crate::market::opensea;
 use crate::market::types::Endpoint;
 use clap::ArgMatches;
 use ethers::core::types::Address;
-use std::io;
+use std::error::Error;
 
 pub struct FloorArgs {
     common: common::CommonArgs,
@@ -11,7 +11,7 @@ pub struct FloorArgs {
 }
 
 // TODO: moved number from common
-pub fn validate(args: &ArgMatches) -> Result<FloorArgs, io::Error> {
+pub fn validate(args: &ArgMatches) -> Result<FloorArgs, Box<dyn Error>> {
     match common::validate(args) {
         Ok(common_args) => Ok(FloorArgs {
             common: common_args,
@@ -25,7 +25,7 @@ pub async fn run_for_address(
     address: Address,
     api: opensea::OpenSeaApi,
     number: u8,
-) -> Result<(), io::Error> {
+) -> Result<(), Box<dyn Error>> {
     // floor api is syntactice sugar that builds request for you
     // send request and take action
     match api.get_floor(address, number) {

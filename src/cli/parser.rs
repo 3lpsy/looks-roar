@@ -58,7 +58,10 @@ pub fn parse() -> clap::ArgMatches {
                 .about("list top rarities")
                 .arg(arg_provider.clone())
                 .arg(arg_testnet.clone())
-                .arg(arg_contract.clone()),
+                .arg(arg_contract.clone())
+                .arg(arg_cache.clone())
+                .arg(arg_fresh.clone())
+                .arg(arg_no_cache.clone()),
         )
         .subcommand(
             App::new("iface")

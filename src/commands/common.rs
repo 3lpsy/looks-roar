@@ -1,9 +1,11 @@
 use crate::cache::Cache;
+use crate::utils::AppError;
 use clap::ArgMatches;
 use ethers::core::types::Address;
 use ethers::providers::{Http, Provider};
 use std::convert::TryFrom;
 use std::env;
+use std::error::Error;
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 use std::path::Path;
@@ -73,7 +75,7 @@ fn load_dotenv(path: &str) {
     }
 }
 
-pub fn validate(args: &ArgMatches) -> Result<CommonArgs, io::Error> {
+pub fn validate(args: &ArgMatches) -> Result<CommonArgs, Box<dyn Error>> {
     load_dotenv("./.env");
     // i don't like this
     let mut provider: Option<Provider<Http>> = None;
@@ -118,9 +120,9 @@ pub fn validate(args: &ArgMatches) -> Result<CommonArgs, io::Error> {
                 provider = Some(prov);
             }
             Err(e) => {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
+                return Err(AppError::boxed(
                     format!("Cannot initialize provider from value: {:?}", e),
+                    0,
                 ));
             }
         }
@@ -168,15 +170,9 @@ pub fn validate(args: &ArgMatches) -> Result<CommonArgs, io::Error> {
                         fresh,
                     ))
                 }
-                Err(e) => Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    format!("Bad contract address: {:?}", e),
-                )),
+                Err(e) => Err(AppError::boxed(format!("Bad contract address: {:?}", e), 0)),
             },
         },
-        None => Err(io::Error::new(
-            io::ErrorKind::NotFound,
-            "No contract provided",
-        )),
+        None => Err(AppError::boxed("No contract provided".to_string(), 0)),
     }
 }

@@ -1,9 +1,10 @@
 use crate::cache::types::AddressCache;
 use crate::cache::Cache;
 use crate::contract::{abi, types};
+use crate::utils::AppError;
 use ethers::core::types::Address;
 use ethers::providers::Middleware;
-use std::io;
+use std::error::Error;
 use std::sync::Arc;
 
 // what is M
@@ -19,7 +20,7 @@ impl<M: Middleware> NFT<M> {
         provider: Arc<M>,
         db: Option<Cache>,
         fresh: bool,
-    ) -> Result<Self, io::Error> {
+    ) -> Result<Self, Box<dyn Error>> {
         match (db, fresh) {
             (Some(dbi), false) => match dbi.get_address(&address) {
                 Some(address_cache) => {
@@ -47,7 +48,7 @@ impl<M: Middleware> NFT<M> {
         address: Address,
         provider: Arc<M>,
         db: Option<Cache>,
-    ) -> Result<Self, io::Error> {
+    ) -> Result<Self, Box<dyn Error>> {
         match abi::NFTAbi::build(address, provider.clone()).await {
             Ok(imp) => {
                 // TODO: need to update cache if it exists
@@ -60,10 +61,26 @@ impl<M: Middleware> NFT<M> {
                     None => Ok(Self { imp, db: None }),
                 }
             }
-            Err(e) => Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("Cannot initialize provider from value: {:?}", e),
+            Err(e) => Err(AppError::boxed(
+                format!("Cannot initialze provider: {:?}", e),
+                0,
             )),
+        }
+    }
+    pub async fn enumerate(&self) -> Result<(), Box<dyn Error>> {
+        // TODO: check cache
+        match self.imp.fetch_tokens().await {
+            Ok(_tokens) => {
+                //..
+                Ok(())
+            }
+            Err(e) => {
+                //..
+                Err(AppError::boxed(
+                    format!("Failed to fetch tokens: {:?}", e),
+                    0,
+                ))
+            }
         }
     }
     pub fn iface(&self) -> &types::NFTIface {

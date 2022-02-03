@@ -4,14 +4,14 @@ use crate::contract::nft;
 use clap::ArgMatches;
 use ethers::core::types::Address;
 use ethers::providers::{Http, Provider};
-use std::io;
+use std::error::Error;
 use std::sync::Arc;
 
 pub struct IfaceArgs {
     common: common::CommonArgs,
 }
 
-pub fn validate(args: &ArgMatches) -> Result<IfaceArgs, io::Error> {
+pub fn validate(args: &ArgMatches) -> Result<IfaceArgs, Box<dyn Error>> {
     match common::validate(args) {
         Ok(common_args) => Ok(IfaceArgs {
             common: common_args,
@@ -25,7 +25,7 @@ pub async fn run_for_address(
     provider: Arc<Provider<Http>>,
     db: Option<Cache>,
     fresh: bool,
-) -> Result<(), io::Error> {
+) -> Result<(), Box<dyn Error>> {
     let imp = match nft::NFT::build(address, provider, db, fresh).await {
         Ok(imp) => imp,
         Err(e) => {
@@ -33,8 +33,8 @@ pub async fn run_for_address(
             std::process::exit(1);
         }
     };
-    // TODO: need to confirm args.provider exists and is provided!
 
+    // TODO: need to confirm args.provider exists and is provided!
     let mut opt_str: String = String::new();
     if !imp.opt_ifaces().is_empty() {
         let opt_joined = imp
@@ -49,7 +49,7 @@ pub async fn run_for_address(
     Ok(())
 }
 
-pub async fn run(args: IfaceArgs) -> Result<(), io::Error> {
+pub async fn run(args: IfaceArgs) -> Result<(), Box<dyn Error>> {
     match args.common.contract {
         common::ContractArg::Address(address) => {
             // TODO: handle

@@ -3,11 +3,12 @@ mod cli;
 mod commands;
 mod contract;
 mod market;
+mod utils;
 use commands::{floor, iface, top};
-use std::io;
+use std::error::Error;
 
 #[tokio::main]
-async fn main() -> Result<(), io::Error> {
+async fn main() -> Result<(), Box<dyn Error>> {
     let args = cli::parser::parse();
     match args.subcommand() {
         Some(("floor", matches)) => match floor::validate(matches) {

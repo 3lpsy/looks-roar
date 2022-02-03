@@ -2,13 +2,13 @@ use crate::contract::constants;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-#[derive(Clone, Debug, Copy, Serialize, Deserialize)]
+#[derive(Clone, Debug, Copy, Serialize, Deserialize, PartialEq)]
 pub enum NFTIface {
     ERC721 = 0,
     ERC1155 = 1,
 }
 
-#[derive(Clone, Debug, Copy, Serialize, Deserialize)]
+#[derive(Clone, Debug, Copy, Serialize, Deserialize, PartialEq)]
 pub enum NFTOptIface {
     ERC721Enumerable = 0,
     ERC721Metadata = 1,
