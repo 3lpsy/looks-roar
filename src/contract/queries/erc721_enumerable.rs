@@ -1,7 +1,10 @@
-use crate::contract::abi::{self, ERC721Enumerable};
+use crate::contract::abi::ERC721Enumerable;
 use crate::utils::AppError;
+use ethers::prelude::builders::ContractCall;
 use ethers::prelude::U256;
 use ethers::providers::Middleware;
+use futures::future::join_all;
+use futures::prelude::stream::FuturesUnordered;
 use std::error::Error;
 
 pub struct ERC721EnumerableQuery {}
@@ -9,20 +12,26 @@ pub struct ERC721EnumerableQuery {}
 impl ERC721EnumerableQuery {
     pub async fn fetch_tokens<M: Middleware>(
         imp: ERC721Enumerable<M>,
-    ) -> Result<Vec<String>, Box<dyn Error>> {
+    ) -> Result<Vec<U256>, Box<dyn Error>> {
         match imp.total_supply().call().await {
             Ok(total_supply) => {
-                let mut tokens: Vec<String> = vec![];
-                for index in 0..total_supply {
-                    let index_str = index.to_string();
-                    match imp.token_by_index(index).call().await {
-                        Ok(token) => tokens.push(token),
-                        Err(e) => {
-                            println!("TokenByIndex Error: {:?}", e);
-                        }
+                let total_supply_willing: u64 = total_supply.as_u64();
+                let range = 0..5;
+                let tokens = join_all(range.into_iter().map(|index| {
+                    let imp = &imp;
+                    let uindex = U256::from(index);
+                    async move {
+                        //...
+                        let token = imp.token_by_index(uindex).call().await.unwrap();
+                        println!("Token: {:?}", token.clone());
+                        token
                     }
+                }))
+                .await;
+                for t in tokens {
+                    println!("Token: {:?}", t.clone());
                 }
-                unimplemented!();
+                Ok(vec![])
             }
             Err(e) => Err(AppError::boxed(
                 format!("Total Supply call failed: {:?}", e),

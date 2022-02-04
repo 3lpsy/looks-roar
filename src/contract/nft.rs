@@ -3,6 +3,7 @@ use crate::cache::Cache;
 use crate::contract::{abi, types};
 use crate::utils::AppError;
 use ethers::core::types::Address;
+use ethers::prelude::U256;
 use ethers::providers::Middleware;
 use std::error::Error;
 use std::sync::Arc;
@@ -61,26 +62,17 @@ impl<M: Middleware> NFT<M> {
                     None => Ok(Self { imp, db: None }),
                 }
             }
-            Err(e) => Err(AppError::boxed(
-                format!("Cannot initialze provider: {:?}", e),
-                0,
-            )),
+            Err(e) => Err(e),
         }
     }
-    pub async fn enumerate(&self) -> Result<(), Box<dyn Error>> {
+    pub async fn enumerate(&self) -> Result<Vec<U256>, Box<dyn Error>> {
         // TODO: check cache
         match self.imp.fetch_tokens().await {
-            Ok(_tokens) => {
+            Ok(tokens) => {
                 //..
-                Ok(())
+                Ok(tokens)
             }
-            Err(e) => {
-                //..
-                Err(AppError::boxed(
-                    format!("Failed to fetch tokens: {:?}", e),
-                    0,
-                ))
-            }
+            Err(e) => Err(e),
         }
     }
     pub fn iface(&self) -> &types::NFTIface {

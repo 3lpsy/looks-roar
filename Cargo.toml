@@ -14,3 +14,4 @@ tokio = { version = "1.5", features = ["macros", "rt-multi-thread"] }
 sled = {version = "*" }
 serde = { version = "*", features = ["derive"] }
 bincode = { version = "*" }
+futures = { version = "*" }

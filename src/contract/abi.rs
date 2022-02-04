@@ -8,6 +8,7 @@ use ethers::core::types::Address;
 use ethers::providers::Middleware;
 use std::error::Error;
 use super::queries;
+use ethers::prelude::U256;
 
 abigen!(
     ERC165,
@@ -141,7 +142,7 @@ impl<M: Middleware> NFTAbi<M> {
         Ok(imp)
     }
 
-    pub async fn fetch_tokens(&self) -> Result<Vec<String>, Box<dyn Error>> {
+    pub async fn fetch_tokens(&self) -> Result<Vec<U256>, Box<dyn Error>> {
         if self.has_opt_interface(NFTOptIface::ERC721Enumerable) {
             let tokens = queries::ERC721EnumerableQuery::fetch_tokens(self.to_erc721_enumerable()).await?;
             return Ok(tokens);
