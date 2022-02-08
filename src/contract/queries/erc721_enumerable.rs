@@ -16,7 +16,7 @@ impl ERC721EnumerableQuery {
         match imp.total_supply().call().await {
             Ok(total_supply) => {
                 let total_supply_willing: u64 = total_supply.as_u64();
-                let range = 0..5;
+                let range = 0..total_supply_willing;
                 let tokens = join_all(range.into_iter().map(|index| {
                     let imp = &imp;
                     let uindex = U256::from(index);
@@ -28,10 +28,7 @@ impl ERC721EnumerableQuery {
                     }
                 }))
                 .await;
-                for t in tokens {
-                    println!("Token: {:?}", t.clone());
-                }
-                Ok(vec![])
+                Ok(tokens)
             }
             Err(e) => Err(AppError::boxed(
                 format!("Total Supply call failed: {:?}", e),
