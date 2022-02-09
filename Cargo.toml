@@ -15,3 +15,6 @@ sled = {version = "*" }
 serde = { version = "*", features = ["derive"] }
 bincode = { version = "*" }
 futures = { version = "*" }
+
+[build-dependencies]
+ethers = { git = "https://github.com/gakonst/ethers-rs", features = ["abigen"]}

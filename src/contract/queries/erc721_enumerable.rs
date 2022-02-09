@@ -1,4 +1,4 @@
-use crate::contract::abi::ERC721Enumerable;
+use crate::contract::abis::ERC721Enumerable;
 use crate::utils::AppError;
 use ethers::prelude::builders::ContractCall;
 use ethers::prelude::U256;

@@ -1,74 +1,14 @@
 use std::sync::Arc;
 
 use super::constants;
+use super::queries;
+use crate::contract::abis::{ERC721Enumerable, ERC1155, ERC165, ERC721};
 use crate::contract::types::{NFTIface, NFTOptIface};
 use crate::utils::AppError;
-use ethers::contract::abigen;
 use ethers::core::types::Address;
+use ethers::prelude::U256;
 use ethers::providers::Middleware;
 use std::error::Error;
-use super::queries;
-use ethers::prelude::U256;
-
-abigen!(
-    ERC165,
-    r#"[
-        function supportsInterface(bytes4 interfaceId) external view returns (bool)
-    ]"#
-);
-// TODO: make these implement the same trait
-abigen!(
-    ERC721,
-    r#"[
-        function balanceOf(address _owner) external view returns (uint256)
-        function ownerOf(uint256 _tokenId) external view returns (address)
-        function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes data) external payable
-        function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable;
-        function transferFrom(address _from, address _to, uint256 _tokenId) external payable
-        function approve(address _approved, uint256 _tokenId) external payable
-        function setApprovalForAll(address _operator, bool _approved) external
-        function getApproved(uint256 _tokenId) external view returns (address)
-        function isApprovedForAll(address _owner, address _operator) external view returns (bool)
-        function supportsInterface(bytes4 interfaceId) external view returns (bool)
-    ]"#
-);
-
-abigen!(
-    ERC721Metadata,
-    r#"[
-        function name() external view returns (string _name)
-        function symbol() external view returns (string _symbol)
-        function tokenURI(uint256 _tokenId) external view returns (string)
-    ]"#
-);
-
-abigen!(
-    ERC721Enumerable,
-    r#"[
-        function totalSupply() external view returns (uint256)
-        function tokenByIndex(uint256 _index) external view returns (uint256)
-        function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256)
-    ]"#
-);
-
-abigen!(
-    ERC1155,
-    r#"[
-        function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata _data) external
-        function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) external
-        function balanceOf(address _owner) external view returns (uint256)
-        function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids) external view returns (uint256[] memory)
-        function setApprovalForAll(address _operator, bool _approved) external
-        function isApprovedForAll(address _owner, address _operator) external view returns (bool)
-    ]"#
-);
-
-abigen!(
-    ERC1155MetadataUri,
-    r#"[
-        function uri(uint256 _id) external view returns (string memory)
-    ]"#
-);
 
 pub struct NFTAbi<M> {
     erc721: Option<ERC721<M>>,
@@ -144,7 +84,8 @@ impl<M: Middleware> NFTAbi<M> {
 
     pub async fn fetch_tokens(&self) -> Result<Vec<U256>, Box<dyn Error>> {
         if self.has_opt_interface(NFTOptIface::ERC721Enumerable) {
-            let tokens = queries::ERC721EnumerableQuery::fetch_tokens(self.to_erc721_enumerable()).await?;
+            let tokens =
+                queries::ERC721EnumerableQuery::fetch_tokens(self.to_erc721_enumerable()).await?;
             return Ok(tokens);
         }
         unimplemented!();
