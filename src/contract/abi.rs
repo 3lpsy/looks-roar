@@ -3,22 +3,84 @@ use std::sync::Arc;
 use super::constants;
 use super::queries;
 use crate::contract::abis::{ERC721Enumerable, ERC1155, ERC165, ERC721};
-use crate::contract::types::{NFTIface, NFTOptIface};
+use crate::contract::types::NFTIface;
 use crate::utils::AppError;
 use ethers::core::types::Address;
+use ethers::prelude::Multicall;
+use ethers::prelude::Signer;
 use ethers::prelude::U256;
 use ethers::providers::Middleware;
 use std::error::Error;
 
-pub struct NFTAbi<M> {
-    erc721: Option<ERC721<M>>,
-    erc1155: Option<ERC1155<M>>,
-    pub iface: NFTIface,
-    pub opt_ifaces: Vec<NFTOptIface>,
-    pub provider: Arc<M>,
+pub struct NftIfacesResponse {
+    address: Address,
+    ifaces: Vec<NFTIface>,
+}
+pub struct IfaceResponse {
+    address: Address,
+    ifaces: [u8; 4],
 }
 
-impl<M: Middleware> NFTAbi<M> {
+impl From<IfaceResponse> for NftIfacesResponse {
+    fn from(response: IfaceResponse) -> Self {
+        let ifaces = response
+            .ifaces
+            .into_iter()
+            .map(|i| NFTIface::from_id(i))
+            .collect();
+        Self {
+            address: response.address,
+            ifaces,
+        }
+    }
+}
+
+pub struct NFTAbi;
+
+impl NFTAbi {
+    pub async fn guess_nft_ifaces<M: Middleware>(
+        addresses: Vec<Address>,
+        provider: Arc<M>,
+    ) -> Result<Vec<NftIfacesResponse>, Box<dyn Error>> {
+        let responses =
+            Self::guess_ifaces_or_unsupported(addresses, NFTIface::all_ids(), provider).await?;
+        let mut missing: Vec<Address> = vec![];
+        for response in responses {
+            if response.ifaces > 0 {
+                missing.push(response.address)
+            }
+        }
+        if missing.len() > 0 {
+            Err(AppError::new(
+                format!("Found unsupported addresses for ifaces: {:?}", missing),
+                0,
+            ))
+        }
+        unimplemented!()
+    }
+
+    pub async fn guess_ifaces_or_unsupported<M: Middleware>(
+        addresses: Vec<Address>,
+        ifaces: Vec<[u8; 4]>,
+        provider: Arc<M>,
+    ) -> Vec<IfaceResponse> {
+        for address in addresses {
+            let contract = ERC165::new(address, provider.clone());
+            let multi = Multicall::new(provider.clone(), address);
+            // can i do a multi call to many addresses
+            let calls = ifaces.into_iter(
+        }
+        // check for 1155s support first
+        for iface in ifaces {
+            let calls = addresses
+                .into_iter()
+                .map(|a| contract.supports_interface(iface))
+                .collect();
+        }
+
+        unimplemented!();
+    }
+
     // just handle both cases
     pub async fn guess_type(address: Address, provider: Arc<M>) -> Option<NFTIface> {
         let imp = ERC165::new(address, provider);
@@ -49,7 +111,7 @@ impl<M: Middleware> NFTAbi<M> {
         address: Address,
         provider: Arc<M>,
         iface: NFTIface,
-        opt_ifaces: Vec<NFTOptIface>,
+        opt_ifaces: Vec<NFTIface>,
     ) -> Self {
         match iface {
             NFTIface::ERC721 => Self {

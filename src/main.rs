@@ -1,7 +1,7 @@
-mod cache;
 mod cli;
 mod commands;
 mod contract;
+mod db;
 mod market;
 mod utils;
 use commands::{floor, iface, top};

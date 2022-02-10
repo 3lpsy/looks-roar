@@ -25,21 +25,33 @@ pub fn validate(args: &ArgMatches) -> Result<TopArgs, Box<dyn Error>> {
     }
 }
 
-pub async fn run_for_address(
-    address: Address,
-    provider: Arc<Provider<Http>>,
-    db: Option<Cache>,
-    fresh: bool,
-) -> Result<(), Box<dyn Error>> {
-    // TODO: need to confirm args.provider exists and is provided!
-    let api = match nft::NFT::build(address, provider, db, fresh).await {
+pub async fn run(args: TopArgs) -> Result<(), Box<dyn Error>> {
+    // initialize provider
+    // need to do abigen and contract iniitalization
+    //
+    let provider = Arc::new(args.common.provider.unwrap());
+    let fresh = args.common.fresh;
+    let db = args.common.db.clone();
+    let targets = match args.common.contract {
+        common::ContractArg::Address(address) => {
+            vec![address]
+        }
+        common::ContractArg::AddressList(addresses) => addresses,
+    };
+
+    let api = match nft::NFT::build(targets, provider, db, fresh).await {
         Ok(imp) => imp,
         Err(e) => {
             println!("No NFT interface found supported: {:?}", e);
             std::process::exit(1);
         }
     };
-    println!("{:?}:{:?}", address, api.iface());
+    for &nft in api.nfts() {
+        for iface in nft.ifaces() {
+            println!("{:?}:{:?}", nft.address, iface);
+        }
+    }
+
     match api.enumerate().await {
         Ok(_tokens) => {
             //..
@@ -48,30 +60,6 @@ pub async fn run_for_address(
         Err(e) => {
             //..
             unimplemented!()
-        }
-    }
-}
-pub async fn run(args: TopArgs) -> Result<(), Box<dyn Error>> {
-    // initialize provider
-    // need to do abigen and contract iniitalization
-    //
-    match args.common.contract {
-        common::ContractArg::Address(address) => {
-            let provider = Arc::new(args.common.provider.unwrap());
-            let fresh = args.common.fresh;
-            run_for_address(address, provider, args.common.db, fresh).await
-        }
-        common::ContractArg::AddressList(addresses) => {
-            let provider = Arc::new(args.common.provider.unwrap());
-            let fresh = args.common.fresh;
-            for address in addresses {
-                // TODO: add cache
-                let db = args.common.db.clone();
-                let _is_good = run_for_address(address, provider.clone(), db, fresh)
-                    .await
-                    .is_ok();
-            }
-            Ok(())
         }
     }
 }

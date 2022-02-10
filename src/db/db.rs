@@ -1,4 +1,4 @@
-use crate::cache::types::AddressCache;
+use crate::db::types::NftEntry;
 use bincode;
 use ethers::core::types::Address;
 use sled::{self, IVec};
@@ -6,26 +6,46 @@ use std::error::Error;
 use std::fmt::Debug;
 
 #[derive(Debug, Clone)]
-pub struct Cache {
+pub struct Db {
     imp: sled::Db,
 }
 
-impl Cache {
+impl Db {
     pub fn open(path: &str) -> Result<Self, Box<dyn Error>> {
         match sled::open(path) {
             Ok(db) => Ok(Self { imp: db }),
             Err(e) => Err(Box::new(e)),
         }
     }
+    pub fn get_addresses_or_absent(
+        &self,
+        addresses: &Vec<Address>,
+    ) -> (Vec<NftEntry>, Vec<Address>) {
+        let mut entries: Vec<NftEntry> = vec![];
+        let mut absent: Vec<Address> = vec![];
+        for address in addresses {
+            match self.get_address(&address) {
+                Some(entry) => {
+                    println!("Building from cache: {:?}", address.clone());
+                    entries.push(entry);
+                }
+                None => {
+                    println!("Cache miss: {:?}", address.clone());
+                    absent.push(address.to_owned());
+                }
+            };
+        }
+        (entries, absent)
+    }
 
-    pub fn get_address(&self, address: &Address) -> Option<AddressCache> {
+    pub fn get_address(&self, address: &Address) -> Option<NftEntry> {
         match self.get(address) {
             Some(data) => {
                 //...
-                match bincode::deserialize::<AddressCache>(&data) {
+                match bincode::deserialize::<NftEntry>(&data) {
                     Ok(ac) => Some(ac),
                     Err(e) => {
-                        println!("Failed to decode key from cache db: {:?}", e);
+                        println!("Failed to decode key from db: {:?}", e);
                         None
                     }
                 }
@@ -37,9 +57,9 @@ impl Cache {
     pub fn save_address(
         &self,
         address: &Address,
-        address_cache: &AddressCache,
+        entry: &NftEntry,
     ) -> Result<bool, Box<dyn Error>> {
-        match bincode::serialize(address_cache) {
+        match bincode::serialize(entry) {
             Ok(data) => match self.insert(address, data) {
                 Ok(was_set) => Ok(was_set),
                 Err(e) => {
