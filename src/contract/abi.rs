@@ -6,6 +6,7 @@ use crate::contract::abis::ERC165;
 use crate::contract::types::NFTIface;
 use crate::utils::AppError;
 use ethers::core::types::Address;
+use ethers::prelude::builders::ContractCall;
 use ethers::prelude::Multicall;
 // use ethers::prelude::Signer;
 // use ethers::prelude::U256;
@@ -48,11 +49,11 @@ impl<M: Middleware> NFTAbi<M> {
             Self::guess_ifaces_or_unsupported(addresses, NFTIface::all_ids(), provider).await?;
         let mut missing: Vec<Address> = vec![];
         for response in responses {
-            if response.ifaces.len() > 0 {
+            if !response.ifaces.is_empty() {
                 missing.push(response.address)
             }
         }
-        if missing.len() > 0 {
+        if !missing.is_empty() {
             return Err(AppError::boxed(
                 format!("Found unsupported addresses for ifaces: {:?}", missing),
                 0,
@@ -68,7 +69,9 @@ impl<M: Middleware> NFTAbi<M> {
         provider: Arc<M>,
     ) -> Result<Vec<IfaceResponse>, Box<dyn Error>> {
         // M is included in potential error so can't use '?'
+        // multicall is restricted to 16 at a time
         let mut m = Multicall::new(provider.clone(), None).await.unwrap();
+        let mut calls: Vec<ContractCall<M>> = vec![];
         let multi = addresses
             .iter()
             .map(|a| {
@@ -76,11 +79,13 @@ impl<M: Middleware> NFTAbi<M> {
                 ERC165::new(a.to_owned(), provider.clone())
             })
             .fold(m, |mut multi_carry, contract| {
-                for iface in ifaces {
-                    multi_carry.add_call(contract.supports_interface(iface));
+                for iface in &ifaces[..] {
+                    multi_carry.add_call(contract.supports_interface(*iface));
                 }
                 multi_carry
             });
+
+        //
         let data: Vec<bool> = match multi.call().await {
             Ok(result) => result,
             Err(_e) => return Err(AppError::boxed("Multicall failed".to_string(), 0)),
