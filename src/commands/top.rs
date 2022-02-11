@@ -1,9 +1,9 @@
-use crate::cache::Cache;
 use crate::commands::common;
 use crate::contract::nft;
+// use crate::db::Db;
 use clap::ArgMatches;
-use ethers::core::types::Address;
-use ethers::providers::{Http, Provider};
+// use ethers::core::types::Address;
+// use ethers::providers::{Http, Provider};
 use std::error::Error;
 use std::sync::Arc;
 
@@ -46,20 +46,21 @@ pub async fn run(args: TopArgs) -> Result<(), Box<dyn Error>> {
             std::process::exit(1);
         }
     };
-    for &nft in api.nfts() {
-        for iface in nft.ifaces() {
-            println!("{:?}:{:?}", nft.address, iface);
-        }
-    }
+    // for &nft in api.nfts() {
+    //     for iface in nft.ifaces() {
+    //         println!("{:?}:{:?}", nft.address, iface);
+    //     }
+    // }
 
-    match api.enumerate().await {
-        Ok(_tokens) => {
-            //..
-            unimplemented!();
-        }
-        Err(e) => {
-            //..
-            unimplemented!()
-        }
-    }
+    // match api.enumerate().await {
+    //     Ok(_tokens) => {
+    //         //..
+    //         unimplemented!();
+    //     }
+    //     Err(e) => {
+    //         //..
+    //         unimplemented!()
+    //     }
+    // }
+    unimplemented!()
 }

@@ -1,10 +1,8 @@
 use crate::contract::abis::ERC721Enumerable;
 use crate::utils::AppError;
-use ethers::prelude::builders::ContractCall;
 use ethers::prelude::U256;
 use ethers::providers::Middleware;
 use futures::future::join_all;
-use futures::prelude::stream::FuturesUnordered;
 use std::error::Error;
 
 pub struct ERC721EnumerableQuery {}

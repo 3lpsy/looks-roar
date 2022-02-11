@@ -45,14 +45,14 @@ pub fn parse() -> clap::ArgMatches {
         .about("> An NFT roarity inspector")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .arg(verbose)
-        .subcommand(
-            App::new("floor")
-                .about("list floor prices")
-                .arg(arg_provider.clone())
-                .arg(arg_number.clone())
-                .arg(arg_testnet.clone())
-                .arg(arg_contract.clone()),
-        )
+        // .subcommand(
+        //     App::new("floor")
+        //         .about("list floor prices")
+        //         .arg(arg_provider.clone())
+        //         .arg(arg_number.clone())
+        //         .arg(arg_testnet.clone())
+        //         .arg(arg_contract.clone()),
+        // )
         .subcommand(
             App::new("top")
                 .about("list top rarities")

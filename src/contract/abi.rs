@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use super::constants;
-use super::queries;
-use crate::contract::abis::{ERC721Enumerable, ERC1155, ERC165, ERC721};
+// use super::queries;
+use crate::contract::abis::ERC165;
 use crate::contract::types::NFTIface;
 use crate::utils::AppError;
 use ethers::core::types::Address;
 use ethers::prelude::Multicall;
-use ethers::prelude::Signer;
-use ethers::prelude::U256;
+// use ethers::prelude::Signer;
+// use ethers::prelude::U256;
 use ethers::providers::Middleware;
 use std::error::Error;
 
@@ -18,7 +18,7 @@ pub struct NftIfacesResponse {
 }
 pub struct IfaceResponse {
     address: Address,
-    ifaces: [u8; 4],
+    ifaces: Vec<[u8; 4]>,
 }
 
 impl From<IfaceResponse> for NftIfacesResponse {
@@ -35,10 +35,12 @@ impl From<IfaceResponse> for NftIfacesResponse {
     }
 }
 
-pub struct NFTAbi;
+pub struct NFTAbi<M> {
+    x: M,
+}
 
-impl NFTAbi {
-    pub async fn guess_nft_ifaces<M: Middleware>(
+impl<M: Middleware> NFTAbi<M> {
+    pub async fn guess_nft_ifaces(
         addresses: Vec<Address>,
         provider: Arc<M>,
     ) -> Result<Vec<NftIfacesResponse>, Box<dyn Error>> {
@@ -46,39 +48,45 @@ impl NFTAbi {
             Self::guess_ifaces_or_unsupported(addresses, NFTIface::all_ids(), provider).await?;
         let mut missing: Vec<Address> = vec![];
         for response in responses {
-            if response.ifaces > 0 {
+            if response.ifaces.len() > 0 {
                 missing.push(response.address)
             }
         }
         if missing.len() > 0 {
-            Err(AppError::new(
+            return Err(AppError::boxed(
                 format!("Found unsupported addresses for ifaces: {:?}", missing),
                 0,
-            ))
+            ));
         }
         unimplemented!()
     }
 
-    pub async fn guess_ifaces_or_unsupported<M: Middleware>(
+    // ifaces is probably going to be less than 1000 calls in a multicall
+    pub async fn guess_ifaces_or_unsupported(
         addresses: Vec<Address>,
         ifaces: Vec<[u8; 4]>,
         provider: Arc<M>,
-    ) -> Vec<IfaceResponse> {
-        for address in addresses {
-            let contract = ERC165::new(address, provider.clone());
-            let multi = Multicall::new(provider.clone(), address);
-            // can i do a multi call to many addresses
-            let calls = ifaces.into_iter(
-        }
-        // check for 1155s support first
-        for iface in ifaces {
-            let calls = addresses
-                .into_iter()
-                .map(|a| contract.supports_interface(iface))
-                .collect();
-        }
-
-        unimplemented!();
+    ) -> Result<Vec<IfaceResponse>, Box<dyn Error>> {
+        // M is included in potential error so can't use '?'
+        let mut m = Multicall::new(provider.clone(), None).await.unwrap();
+        let multi = addresses
+            .iter()
+            .map(|a| {
+                //...
+                ERC165::new(a.to_owned(), provider.clone())
+            })
+            .fold(m, |mut multi_carry, contract| {
+                for iface in ifaces {
+                    multi_carry.add_call(contract.supports_interface(iface));
+                }
+                multi_carry
+            });
+        let data: Vec<bool> = match multi.call().await {
+            Ok(result) => result,
+            Err(_e) => return Err(AppError::boxed("Multicall failed".to_string(), 0)),
+        };
+        dbg!(data);
+        Ok(vec![])
     }
 
     // just handle both cases
@@ -105,98 +113,5 @@ impl NFTAbi {
             },
             Err(_e) => None,
         }
-    }
-
-    pub fn new(
-        address: Address,
-        provider: Arc<M>,
-        iface: NFTIface,
-        opt_ifaces: Vec<NFTIface>,
-    ) -> Self {
-        match iface {
-            NFTIface::ERC721 => Self {
-                erc721: Some(ERC721::new(address, provider.clone())),
-                erc1155: None,
-                iface,
-                opt_ifaces,
-                provider,
-            },
-            NFTIface::ERC1155 => Self {
-                erc721: None,
-                erc1155: Some(ERC1155::new(address, provider.clone())),
-                iface,
-                opt_ifaces,
-                provider,
-            },
-        }
-    }
-
-    pub async fn build(address: Address, provider: Arc<M>) -> Result<Self, Box<dyn Error>> {
-        let iface = match Self::guess_type(address, provider.clone()).await {
-            Some(found) => found,
-            None => {
-                let m = format!("No iface found for address: {:?}", address);
-                return Err(AppError::boxed(m, 0));
-            }
-        };
-        let mut imp = Self::new(address, provider, iface, vec![]);
-        imp.load_opt_interfaces().await;
-        Ok(imp)
-    }
-
-    pub async fn fetch_tokens(&self) -> Result<Vec<U256>, Box<dyn Error>> {
-        if self.has_opt_interface(NFTOptIface::ERC721Enumerable) {
-            let tokens =
-                queries::ERC721EnumerableQuery::fetch_tokens(self.to_erc721_enumerable()).await?;
-            return Ok(tokens);
-        }
-        unimplemented!();
-    }
-
-    // TODO: handle both normal iface / opt iface
-    async fn load_opt_interfaces(&mut self) {
-        let candidates = vec![
-            NFTOptIface::ERC721Enumerable,
-            NFTOptIface::ERC721Metadata,
-            NFTOptIface::ERC1155MetadataUri,
-        ];
-        for candidate in candidates {
-            if self.query_interface_support(candidate).await {
-                // TODO: can i avoid this clone?
-                self.opt_ifaces.push(candidate);
-            }
-        }
-        // can ERC1155's support optional ERC721 interfaces?
-    }
-
-    pub fn has_opt_interface(&self, iface: NFTOptIface) -> bool {
-        self.opt_ifaces.contains(&iface)
-    }
-
-    async fn query_interface_support(&self, iface: NFTOptIface) -> bool {
-        match self.to_erc165().supports_interface(iface.id()).call().await {
-            Ok(answer) => answer,
-            Err(_e) => false,
-        }
-    }
-
-    fn address(&self) -> Address {
-        match self.iface {
-            NFTIface::ERC721 => match &self.erc721 {
-                Some(imp) => imp.address(),
-                None => panic!("Contructed without contract"),
-            },
-            NFTIface::ERC1155 => match &self.erc1155 {
-                Some(imp) => imp.address(),
-                None => panic!("Contructed with wrong contract/iface"),
-            },
-        }
-    }
-
-    fn to_erc165(&self) -> ERC165<M> {
-        ERC165::new(self.address(), self.provider.clone())
-    }
-    fn to_erc721_enumerable(&self) -> ERC721Enumerable<M> {
-        ERC721Enumerable::new(self.address(), self.provider.clone())
     }
 }

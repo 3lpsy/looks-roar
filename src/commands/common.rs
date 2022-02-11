@@ -1,4 +1,4 @@
-use crate::cache::Cache;
+use crate::db::Db;
 use crate::utils::AppError;
 use clap::ArgMatches;
 use ethers::core::types::Address;
@@ -7,7 +7,7 @@ use std::convert::TryFrom;
 use std::env;
 use std::error::Error;
 use std::fs::File;
-use std::io::{self, prelude::*, BufReader};
+use std::io::{prelude::*, BufReader};
 use std::path::Path;
 
 #[derive(Debug)]
@@ -21,7 +21,7 @@ pub struct CommonArgs {
     pub contract: ContractArg,
     pub provider: Option<Provider<Http>>,
     pub testnet: bool,
-    pub db: Option<Cache>,
+    pub db: Option<Db>,
     pub fresh: bool,
 }
 
@@ -30,7 +30,7 @@ impl CommonArgs {
         contract: ContractArg,
         provider: Option<Provider<Http>>,
         testnet: bool,
-        db: Option<Cache>,
+        db: Option<Db>,
         fresh: bool,
     ) -> Self {
         Self {
@@ -89,25 +89,25 @@ pub fn validate(args: &ArgMatches) -> Result<CommonArgs, Box<dyn Error>> {
     }
 
     // define caching setup variables
-    let mut cache_path: Option<String> = None;
+    let mut db_path: Option<String> = None;
     let fresh: bool = args.is_present("fresh");
     if args.is_present("cache") {
-        cache_path = Some(args.value_of("cache").unwrap().to_string());
+        db_path = Some(args.value_of("cache").unwrap().to_string());
     } else if env::var("LOOKS_ROAR_CACHE").is_ok() {
-        cache_path = Some(env::var("LOOKS_ROAR_CACHE").unwrap());
+        db_path = Some(env::var("LOOKS_ROAR_CACHE").unwrap());
     }
 
     if args.is_present("no_cache") {
-        cache_path = None;
+        db_path = None;
     }
 
-    let mut db: Option<Cache> = None;
-    if cache_path.is_some() {
-        db = match Cache::open(&cache_path.unwrap()) {
+    let mut db: Option<Db> = None;
+    if db_path.is_some() {
+        db = match Db::open(&db_path.unwrap()) {
             Ok(db) => Some(db),
             Err(e) => {
                 // TODO: better handling
-                println!("Error loading cache: {:?}", e);
+                println!("Error loading db: {:?}", e);
                 None
             }
         };
