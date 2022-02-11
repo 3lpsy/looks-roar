@@ -14,7 +14,6 @@ OPTIONS:
     -v, --verbose    verbosity
 
 SUBCOMMANDS:
-    floor    list floor prices
     help     Print this message or the help of the given subcommand(s)
     iface    list supported interfaces
     top      list top rarities
