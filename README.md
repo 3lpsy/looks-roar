@@ -29,12 +29,13 @@ USAGE:
     roar iface [OPTIONS] --contract <contract>
 
 OPTIONS:
-    -c, --contract <contract>    contract to target
+    -c, --contract <contract>    contract to target (can be '0xABC' string or path to file)
     -d, --db <db>                path to db (created automatically if absent)
     -f, --fresh                  sync fresh data to db
     -h, --help                   Print help information
     -N, --no-db                  do not use db
-    -p, --provider <provider>    ethereum provider
+    -p, --provider <provider>    ethereum provider (such as 'http://localhost:8545'
     -t, --testnet                use testnet
     -v, --verbose                verbosity
+
 ```
