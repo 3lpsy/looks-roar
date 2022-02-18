@@ -1,4 +1,5 @@
 use crate::commands::common;
+use crate::contract::nft;
 use clap::ArgMatches;
 use std::error::Error;
 use std::sync::Arc;
@@ -25,5 +26,24 @@ pub async fn run(args: IfaceArgs) -> Result<(), Box<dyn Error>> {
         common::ContractArg::Address(address) => vec![address],
         common::ContractArg::AddressList(addresses) => addresses,
     };
+
+    let api = match nft::NFT::build(targets, provider, db, fresh).await {
+        Ok(imp) => imp,
+        Err(e) => {
+            println!("No NFT interface found supported: {:?}", e);
+            std::process::exit(1);
+        }
+    };
+    for (address, entry) in api.nfts {
+        let ifaces_str = entry
+            .ifaces
+            .iter()
+            .fold(String::new(), |carry, iface| {
+                carry + "," + &iface.to_string()
+            })
+            .trim_matches(',')
+            .to_owned();
+        println!("{:?}:{}", address, ifaces_str);
+    }
     Ok(())
 }

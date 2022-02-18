@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[derive(Clone, Debug, Copy, Serialize, Deserialize, PartialEq)]
-pub enum NFTIface {
+pub enum Iface {
     ERC721 = 0,
     ERC1155 = 1,
     ERC721Enumerable = 2,
@@ -11,7 +11,7 @@ pub enum NFTIface {
     ERC1155MetadataUri = 4,
 }
 
-impl NFTIface {
+impl Iface {
     pub fn id(&self) -> [u8; 4] {
         match self {
             Self::ERC721 => constants::ERC721_IFACE_ID,
@@ -28,7 +28,7 @@ impl NFTIface {
             constants::ERC721_METADATA_IFACE_ID => Self::ERC721Metadata,
             constants::ERC1155_IFACE_ID => Self::ERC1155,
             constants::ERC1155_METADATA_URI_IFACE_ID => Self::ERC1155MetadataUri,
-            _ => panic!("Bad id for NFTOptIface"),
+            _ => panic!("Bad id for Iface"),
         }
     }
     pub fn all_ids() -> Vec<[u8; 4]> {
@@ -41,7 +41,7 @@ impl NFTIface {
         ]
     }
 }
-impl fmt::Display for NFTIface {
+impl fmt::Display for Iface {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::ERC721 => write!(f, "ERC721"),

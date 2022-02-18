@@ -1,15 +1,15 @@
 use serde::{Deserialize, Serialize};
 
 use crate::contract;
-use crate::contract::types::NFTIface;
+use crate::contract::types::Iface;
 
 #[derive(Serialize, Deserialize)]
 pub struct NftEntry {
-    pub ifaces: Vec<contract::types::NFTIface>,
+    pub ifaces: Vec<contract::types::Iface>,
 }
 
 impl NftEntry {
-    pub fn new(ifaces: Vec<NFTIface>) -> Self {
+    pub fn new(ifaces: Vec<Iface>) -> Self {
         Self { ifaces }
     }
 }

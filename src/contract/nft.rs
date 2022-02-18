@@ -8,14 +8,13 @@ use std::sync::Arc;
 
 // what is M
 // TODO: wrap cache is db wrapper
-pub struct NFT<M> {
-    imp: abi::NFTAbi<M>,
+pub struct NFT {
     db: Option<Db>,
-    nfts: Vec<NftEntry>,
+    pub nfts: Vec<(Address, NftEntry)>,
 }
 
-impl<M: Middleware> NFT<M> {
-    pub async fn build(
+impl NFT {
+    pub async fn build<M: Middleware>(
         addresses: Vec<Address>,
         provider: Arc<M>,
         db: Option<Db>,
@@ -24,30 +23,52 @@ impl<M: Middleware> NFT<M> {
         match (db, fresh) {
             // db is in use and we are not refreshing
             (Some(dbi), false) => {
-                let (entries, absent) = dbi.get_addresses_or_absent(&addresses);
-
-                for (address, entry) in Self::build_entries(absent, provider).await? {
-                    dbi.save_address(&address, &entry);
+                let mut nfts: Vec<(Address, NftEntry)> = vec![];
+                let (present, absent) = dbi.get_addresses_or_absent(&addresses);
+                for (address, entry) in present {
+                    nfts.push((address, entry));
                 }
-                unimplemented!()
+                // only query and build absent
+                for (address, entry) in Self::build_entries(absent, provider).await? {
+                    dbi.save_address(&address, &entry)?;
+                    nfts.push((address, entry));
+                }
+                Ok(Self {
+                    db: Some(dbi),
+                    nfts,
+                })
             }
             (Some(dbi), true) => {
-                for entry in Self::build_entries(addresses, provider).await? {
-                    dbi.save_address(&entry.0, &entry.1);
+                // db exists and we are refreshing
+                let mut nfts: Vec<(Address, NftEntry)> = vec![];
+                for (address, entry) in Self::build_entries(addresses, provider).await? {
+                    dbi.save_address(&address, &entry)?;
+                    nfts.push((address, entry));
                 }
-                unimplemented!()
+                Ok(Self {
+                    db: Some(dbi),
+                    nfts,
+                })
             }
             (None, _) => {
-                let entries = Self::build_entries(addresses, provider).await?;
-                unimplemented!();
+                let mut nfts: Vec<(Address, NftEntry)> = vec![];
+                for (address, entry) in Self::build_entries(addresses, provider).await? {
+                    nfts.push((address, entry));
+                }
+
+                Ok(Self { db: None, nfts })
             }
         }
     }
-    async fn build_entries(
+    async fn build_entries<M: Middleware>(
         addresses: Vec<Address>,
         provider: Arc<M>,
     ) -> Result<Vec<(Address, NftEntry)>, Box<dyn Error>> {
-        let ifaces = abi::NFTAbi::guess_nft_ifaces(addresses, provider).await?;
-        unimplemented!();
+        let data = abi::NFTAbi::get_nft_ifaces_for_addresses(addresses, provider).await?;
+        let mut results: Vec<(Address, NftEntry)> = vec![];
+        for (address, supported) in data {
+            results.push((address, NftEntry::new(supported)));
+        }
+        Ok(results)
     }
 }

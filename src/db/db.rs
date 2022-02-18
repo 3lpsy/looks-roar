@@ -20,14 +20,14 @@ impl Db {
     pub fn get_addresses_or_absent(
         &self,
         addresses: &Vec<Address>,
-    ) -> (Vec<NftEntry>, Vec<Address>) {
-        let mut entries: Vec<NftEntry> = vec![];
+    ) -> (Vec<(Address, NftEntry)>, Vec<Address>) {
+        let mut entries: Vec<(Address, NftEntry)> = vec![];
         let mut absent: Vec<Address> = vec![];
         for address in addresses {
             match self.get_address(&address) {
                 Some(entry) => {
                     println!("Building from cache: {:?}", address.clone());
-                    entries.push(entry);
+                    entries.push((*address, entry));
                 }
                 None => {
                     println!("Cache miss: {:?}", address.clone());
