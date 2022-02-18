@@ -18,6 +18,7 @@ impl IfacesQuery {
         provider: Arc<M>,
     ) -> Result<HashMap<Address, Vec<Iface>>, Box<dyn Error>> {
         let m = Multicall::new(provider.clone(), None).await.unwrap();
+        println!("Making multicall");
 
         // queries will hold index to zip against response
         let mut queries: Vec<(Address, [u8; 4])> = vec![];

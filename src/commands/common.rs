@@ -91,13 +91,13 @@ pub fn validate(args: &ArgMatches) -> Result<CommonArgs, Box<dyn Error>> {
     // define caching setup variables
     let mut db_path: Option<String> = None;
     let fresh: bool = args.is_present("fresh");
-    if args.is_present("cache") {
-        db_path = Some(args.value_of("cache").unwrap().to_string());
-    } else if env::var("LOOKS_ROAR_CACHE").is_ok() {
-        db_path = Some(env::var("LOOKS_ROAR_CACHE").unwrap());
+    if args.is_present("db") {
+        db_path = Some(args.value_of("db").unwrap().to_string());
+    } else if env::var("LOOKS_ROAR_DB").is_ok() {
+        db_path = Some(env::var("LOOKS_ROAR_DB").unwrap());
     }
 
-    if args.is_present("no_cache") {
+    if args.is_present("no_db") {
         db_path = None;
     }
 

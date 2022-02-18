@@ -18,19 +18,19 @@ pub fn parse() -> clap::ArgMatches {
         .long("provider")
         .help("ethereum provider")
         .takes_value(true);
-    let arg_cache = Arg::new("cache")
-        .short('C')
-        .long("cache")
-        .help("path to cache file")
+    let arg_db = Arg::new("db")
+        .short('d')
+        .long("db")
+        .help("path to db (created automatically if absent)")
         .takes_value(true);
     let arg_fresh = Arg::new("fresh")
         .short('f')
         .long("fresh")
-        .help("sync fresh data to cache");
-    let arg_no_cache = Arg::new("no_cache")
+        .help("sync fresh data to db");
+    let arg_no_db = Arg::new("no_db")
         .short('N')
-        .long("no-cache")
-        .help("do not use cache");
+        .long("no-db")
+        .help("do not use db");
     let arg_testnet = Arg::new("testnet")
         .short('t')
         .long("testnet")
@@ -59,9 +59,9 @@ pub fn parse() -> clap::ArgMatches {
                 .arg(arg_provider.clone())
                 .arg(arg_testnet.clone())
                 .arg(arg_contract.clone())
-                .arg(arg_cache.clone())
+                .arg(arg_db.clone())
                 .arg(arg_fresh.clone())
-                .arg(arg_no_cache.clone()),
+                .arg(arg_no_db.clone()),
         )
         .subcommand(
             App::new("iface")
@@ -69,9 +69,9 @@ pub fn parse() -> clap::ArgMatches {
                 .arg(arg_provider.clone())
                 .arg(arg_testnet.clone())
                 .arg(arg_contract.clone())
-                .arg(arg_cache.clone())
+                .arg(arg_db.clone())
                 .arg(arg_fresh.clone())
-                .arg(arg_no_cache.clone()),
+                .arg(arg_no_db.clone()),
         )
         .get_matches()
 }

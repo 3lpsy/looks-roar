@@ -29,9 +29,11 @@ impl NFT {
                     nfts.push((address, entry));
                 }
                 // only query and build absent
-                for (address, entry) in Self::build_entries(absent, provider).await? {
-                    dbi.save_address(&address, &entry)?;
-                    nfts.push((address, entry));
+                if !absent.is_empty() {
+                    for (address, entry) in Self::build_entries(absent, provider).await? {
+                        dbi.save_address(&address, &entry)?;
+                        nfts.push((address, entry));
+                    }
                 }
                 Ok(Self {
                     db: Some(dbi),

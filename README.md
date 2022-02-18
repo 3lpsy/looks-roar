@@ -3,7 +3,7 @@
 A project for working with NFTs and NFT markets.
 
 ```
-roar
+roar 
 > An NFT roarity inspector
 
 USAGE:
@@ -17,4 +17,24 @@ SUBCOMMANDS:
     help     Print this message or the help of the given subcommand(s)
     iface    list supported interfaces
     top      list top rarities
+```
+
+# Interface Commands
+
+```
+roar-iface 
+list supported interfaces
+
+USAGE:
+    roar iface [OPTIONS] --contract <contract>
+
+OPTIONS:
+    -c, --contract <contract>    contract to target
+    -d, --db <db>                path to db (created automatically if absent)
+    -f, --fresh                  sync fresh data to db
+    -h, --help                   Print help information
+    -N, --no-db                  do not use db
+    -p, --provider <provider>    ethereum provider
+    -t, --testnet                use testnet
+    -v, --verbose                verbosity
 ```
