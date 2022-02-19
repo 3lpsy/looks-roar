@@ -27,7 +27,8 @@ pub async fn run(args: IfaceArgs) -> Result<(), Box<dyn Error>> {
         common::ContractArg::AddressList(addresses) => addresses,
     };
 
-    let api = match nft::NFT::build(targets, provider, db, fresh).await {
+    // TODO: what happens when one query fails?
+    let api = match nft::Nft::build(targets, provider, db, fresh).await {
         Ok(imp) => imp,
         Err(e) => {
             println!("No NFT interface found supported: {:?}", e);

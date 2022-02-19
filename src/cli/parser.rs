@@ -10,7 +10,7 @@ pub fn parse() -> clap::ArgMatches {
     let arg_contract = Arg::new("contract")
         .short('c')
         .long("contract")
-        .help("contract to target (can be '0xABC' string or path to file)")
+        .help("contract(s) to target (can be '0xABC' string or path to file containing >=1 addresses)")
         .required(true)
         .takes_value(true);
     let arg_provider = Arg::new("provider")

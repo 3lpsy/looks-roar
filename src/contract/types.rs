@@ -41,6 +41,17 @@ impl Iface {
         ]
     }
 }
+impl From<[u8; 4]> for Iface {
+    fn from(id: [u8; 4]) -> Self {
+        Iface::from_id(id)
+    }
+}
+impl From<Iface> for [u8; 4] {
+    fn from(iface: Iface) -> [u8; 4] {
+        iface.id()
+    }
+}
+
 impl fmt::Display for Iface {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

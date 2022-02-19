@@ -19,12 +19,12 @@ impl Db {
     }
     pub fn get_addresses_or_absent(
         &self,
-        addresses: &Vec<Address>,
+        addresses: &[Address],
     ) -> (Vec<(Address, NftEntry)>, Vec<Address>) {
         let mut entries: Vec<(Address, NftEntry)> = vec![];
         let mut absent: Vec<Address> = vec![];
         for address in addresses {
-            match self.get_address(&address) {
+            match self.get_address(address) {
                 Some(entry) => {
                     println!("Building from cache: {:?}", address.clone());
                     entries.push((*address, entry));
@@ -39,7 +39,7 @@ impl Db {
     }
 
     pub fn get_address(&self, address: &Address) -> Option<NftEntry> {
-        match self.get(address) {
+        match self.get(&address) {
             Some(data) => {
                 //...
                 match bincode::deserialize::<NftEntry>(&data) {
@@ -63,7 +63,7 @@ impl Db {
             Ok(data) => match self.insert(address, data) {
                 Ok(was_set) => Ok(was_set),
                 Err(e) => {
-                    println!("Failure saving address: {:?}", e.clone());
+                    println!("Failure saving address: {:?}", e);
                     Err(Box::new(e))
                 }
             },
@@ -79,10 +79,7 @@ impl Db {
         K: AsRef<[u8]> + Debug,
     {
         match self.imp.get(&key) {
-            Ok(res) => match res {
-                Some(data) => Some(data),
-                None => None,
-            },
+            Ok(res) => res,
             Err(e) => {
                 println!("Failed to get key ({:?}) from cache db: {:?}", key, e);
                 None

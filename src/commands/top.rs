@@ -39,28 +39,23 @@ pub async fn run(args: TopArgs) -> Result<(), Box<dyn Error>> {
         common::ContractArg::AddressList(addresses) => addresses,
     };
 
-    let api = match nft::NFT::build(targets, provider, db, fresh).await {
+    let api = match nft::Nft::build(targets, provider, db, fresh).await {
         Ok(imp) => imp,
         Err(e) => {
             println!("No NFT interface found supported: {:?}", e);
             std::process::exit(1);
         }
     };
-    // for &nft in api.nfts() {
-    //     for iface in nft.ifaces() {
-    //         println!("{:?}:{:?}", nft.address, iface);
-    //     }
-    // }
-
-    // match api.enumerate().await {
-    //     Ok(_tokens) => {
-    //         //..
-    //         unimplemented!();
-    //     }
-    //     Err(e) => {
-    //         //..
-    //         unimplemented!()
-    //     }
-    // }
+    // load known tokenIds
+    match api.enumerate().await {
+        Ok(_tokens) => {
+            //..
+            unimplemented!();
+        }
+        Err(e) => {
+            //..
+            unimplemented!()
+        }
+    }
     unimplemented!()
 }

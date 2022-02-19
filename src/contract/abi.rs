@@ -1,4 +1,4 @@
-use super::queries::IfacesQuery;
+use super::queries::{ERC721EnumerableQuery, IfacesQuery};
 use crate::contract::types::Iface;
 use crate::utils::AppError;
 use ethers::core::types::Address;
@@ -31,5 +31,21 @@ impl NFTAbi {
             ));
         }
         Ok(responses)
+    }
+    pub async fn get_nft_tokens_for_addresses<M: Middleware>(
+        addfaces: HashMap<Address, Vec<Iface>>,
+        provider: Arc<M>,
+    ) -> Result<HashMap<Address, Vec<Iface>>, Box<dyn Error>> {
+        let mut erc721enums: Vec<Address> = vec![];
+        for (address, ifaces) in addfaces.iter() {
+            if ifaces.contains(&Iface::ERC721Enumerable) {
+                erc721enums.push(address.clone());
+            }
+            //other things
+        }
+        let _data =
+            ERC721EnumerableQuery::get_tokens_for_addresses(erc721enums, provider.clone()).await?;
+
+        unimplemented!()
     }
 }

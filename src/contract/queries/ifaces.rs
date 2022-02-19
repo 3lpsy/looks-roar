@@ -14,27 +14,13 @@ pub struct IfacesQuery;
 impl IfacesQuery {
     pub async fn get_ifaces_for_addresses<M: Middleware>(
         addresses: Vec<Address>,
-        ifaces: Vec<[u8; 4]>,
+        ifaces: Vec<Iface>,
         provider: Arc<M>,
     ) -> Result<HashMap<Address, Vec<Iface>>, Box<dyn Error>> {
-        let m = Multicall::new(provider.clone(), None).await.unwrap();
         println!("Making multicall");
+        let (multi, mut queries) = Self::build_multi(addresses, ifaces, provider).await;
 
         // queries will hold index to zip against response
-        let mut queries: Vec<(Address, [u8; 4])> = vec![];
-        let multi = addresses
-            .iter()
-            .map(|a| {
-                //...
-                ERC165::new(a.to_owned(), provider.clone())
-            })
-            .fold(m, |mut multi_carry, contract| {
-                for iface in &ifaces[..] {
-                    queries.push((contract.address().clone(), iface.clone()));
-                    multi_carry.add_call(contract.supports_interface(*iface));
-                }
-                multi_carry
-            });
 
         let mut data: HashMap<Address, Vec<Iface>> = HashMap::new();
 
@@ -51,7 +37,7 @@ impl IfacesQuery {
                     // append iface if status is true
                     if status {
                         let entry = data.get_mut(&query.0).unwrap();
-                        entry.push(Iface::from_id(query.1))
+                        entry.push(query.1)
                     }
                 })
                 .collect(),
@@ -59,5 +45,27 @@ impl IfacesQuery {
             Err(_e) => return Err(AppError::boxed("Multicall failed".to_string(), 0)),
         };
         Ok(data)
+    }
+    pub async fn build_multi<M: Middleware>(
+        addresses: Vec<Address>,
+        ifaces: Vec<Iface>,
+        provider: Arc<M>,
+    ) -> (Multicall<M>, Vec<(Address, Iface)>) {
+        let m = Multicall::new(provider.clone(), None).await.unwrap();
+        let mut queries: Vec<(Address, Iface)> = vec![];
+        let multi = addresses
+            .iter()
+            .map(|a| {
+                //...
+                ERC165::new(a.to_owned(), provider.clone())
+            })
+            .fold(m, |mut multi_carry, contract| {
+                for iface in &ifaces[..] {
+                    queries.push((contract.address().clone(), iface.clone()));
+                    multi_carry.add_call(contract.supports_interface(iface.id()));
+                }
+                multi_carry
+            });
+        (multi, queries)
     }
 }
