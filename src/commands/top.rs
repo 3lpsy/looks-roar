@@ -39,7 +39,7 @@ pub async fn run(args: TopArgs) -> Result<(), Box<dyn Error>> {
         common::ContractArg::AddressList(addresses) => addresses,
     };
 
-    let api = match nft::Nft::build(targets, provider, db, fresh).await {
+    let mut api = match nft::Nft::build(targets, provider, db, fresh).await {
         Ok(imp) => imp,
         Err(e) => {
             println!("No NFT interface found supported: {:?}", e);
@@ -47,15 +47,7 @@ pub async fn run(args: TopArgs) -> Result<(), Box<dyn Error>> {
         }
     };
     // load known tokenIds
-    match api.enumerate().await {
-        Ok(_tokens) => {
-            //..
-            unimplemented!();
-        }
-        Err(e) => {
-            //..
-            unimplemented!()
-        }
-    }
+    api.enumerate().await?;
+
     unimplemented!()
 }

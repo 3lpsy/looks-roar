@@ -18,7 +18,7 @@ mod erc1155_mod {
     use std::sync::Arc;
     pub static ERC1155_ABI: ethers::contract::Lazy<ethers::core::abi::Abi> =
         ethers::contract::Lazy::new(|| {
-            ethers :: core :: abi :: parse_abi_str ("[\n    function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata _data) external\n    function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) external\n    function balanceOf(address _owner) external view returns (uint256)\n    function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids) external view returns (uint256[] memory)\n    function setApprovalForAll(address _operator, bool _approved) external\n    function isApprovedForAll(address _owner, address _operator) external view returns (bool)\n]") . expect ("invalid abi")
+            ethers :: core :: abi :: parse_abi_str ("[\n    function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata _data) external\n    function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) external\n    function balanceOf(address _owner) external view returns (uint256)\n    function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids) external view returns (uint256[] memory)\n    function setApprovalForAll(address _operator, bool _approved) external\n    function isApprovedForAll(address _owner, address _operator) external view returns (bool)\n    event TransferSingle(address indexed _operator, address indexed _from, address indexed _to, uint256 _id, uint256 _value)\n    event TransferBatch(address indexed _operator, address indexed _from, address indexed _to, uint256[] _ids, uint256[] _values)\n    event URI(string _value, uint256 indexed _id)\n    event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved)\n]") . expect ("invalid abi")
         });
     #[derive(Clone)]
     pub struct ERC1155<M>(ethers::contract::Contract<M>);
@@ -112,6 +112,147 @@ mod erc1155_mod {
             self.0
                 .method_hash([162, 44, 180, 101], (operator, approved))
                 .expect("method not found (this should never happen)")
+        }
+        #[doc = "Gets the contract's `ApprovalForAll` event"]
+        pub fn approval_for_all_filter(
+            &self,
+        ) -> ethers::contract::builders::Event<M, ApprovalForAllFilter> {
+            self.0.event()
+        }
+        #[doc = "Gets the contract's `TransferBatch` event"]
+        pub fn transfer_batch_filter(
+            &self,
+        ) -> ethers::contract::builders::Event<M, TransferBatchFilter> {
+            self.0.event()
+        }
+        #[doc = "Gets the contract's `TransferSingle` event"]
+        pub fn transfer_single_filter(
+            &self,
+        ) -> ethers::contract::builders::Event<M, TransferSingleFilter> {
+            self.0.event()
+        }
+        #[doc = "Gets the contract's `URI` event"]
+        pub fn uri_filter(&self) -> ethers::contract::builders::Event<M, UriFilter> {
+            self.0.event()
+        }
+        #[doc = r" Returns an [`Event`](#ethers_contract::builders::Event) builder for all events of this contract"]
+        pub fn events(&self) -> ethers::contract::builders::Event<M, ERC1155Events> {
+            self.0.event_with_filter(Default::default())
+        }
+    }
+    #[derive(
+        Clone,
+        Debug,
+        Default,
+        Eq,
+        PartialEq,
+        ethers :: contract :: EthEvent,
+        ethers :: contract :: EthDisplay,
+    )]
+    #[ethevent(name = "ApprovalForAll", abi = "ApprovalForAll(address,address,bool)")]
+    pub struct ApprovalForAllFilter {
+        #[ethevent(indexed)]
+        pub owner: ethers::core::types::Address,
+        #[ethevent(indexed)]
+        pub operator: ethers::core::types::Address,
+        pub approved: bool,
+    }
+    #[derive(
+        Clone,
+        Debug,
+        Default,
+        Eq,
+        PartialEq,
+        ethers :: contract :: EthEvent,
+        ethers :: contract :: EthDisplay,
+    )]
+    #[ethevent(
+        name = "TransferBatch",
+        abi = "TransferBatch(address,address,address,uint256[],uint256[])"
+    )]
+    pub struct TransferBatchFilter {
+        #[ethevent(indexed)]
+        pub operator: ethers::core::types::Address,
+        #[ethevent(indexed)]
+        pub from: ethers::core::types::Address,
+        #[ethevent(indexed)]
+        pub to: ethers::core::types::Address,
+        pub ids: Vec<ethers::core::types::U256>,
+        pub values: Vec<ethers::core::types::U256>,
+    }
+    #[derive(
+        Clone,
+        Debug,
+        Default,
+        Eq,
+        PartialEq,
+        ethers :: contract :: EthEvent,
+        ethers :: contract :: EthDisplay,
+    )]
+    #[ethevent(
+        name = "TransferSingle",
+        abi = "TransferSingle(address,address,address,uint256,uint256)"
+    )]
+    pub struct TransferSingleFilter {
+        #[ethevent(indexed)]
+        pub operator: ethers::core::types::Address,
+        #[ethevent(indexed)]
+        pub from: ethers::core::types::Address,
+        #[ethevent(indexed)]
+        pub to: ethers::core::types::Address,
+        pub id: ethers::core::types::U256,
+        pub value: ethers::core::types::U256,
+    }
+    #[derive(
+        Clone,
+        Debug,
+        Default,
+        Eq,
+        PartialEq,
+        ethers :: contract :: EthEvent,
+        ethers :: contract :: EthDisplay,
+    )]
+    #[ethevent(name = "URI", abi = "URI(string,uint256)")]
+    pub struct UriFilter {
+        pub value: String,
+        #[ethevent(indexed)]
+        pub id: ethers::core::types::U256,
+    }
+    #[derive(Debug, Clone, PartialEq, Eq, ethers :: contract :: EthAbiType)]
+    pub enum ERC1155Events {
+        ApprovalForAllFilter(ApprovalForAllFilter),
+        TransferBatchFilter(TransferBatchFilter),
+        TransferSingleFilter(TransferSingleFilter),
+        UriFilter(UriFilter),
+    }
+    impl ethers::contract::EthLogDecode for ERC1155Events {
+        fn decode_log(log: &ethers::core::abi::RawLog) -> Result<Self, ethers::core::abi::Error>
+        where
+            Self: Sized,
+        {
+            if let Ok(decoded) = ApprovalForAllFilter::decode_log(log) {
+                return Ok(ERC1155Events::ApprovalForAllFilter(decoded));
+            }
+            if let Ok(decoded) = TransferBatchFilter::decode_log(log) {
+                return Ok(ERC1155Events::TransferBatchFilter(decoded));
+            }
+            if let Ok(decoded) = TransferSingleFilter::decode_log(log) {
+                return Ok(ERC1155Events::TransferSingleFilter(decoded));
+            }
+            if let Ok(decoded) = UriFilter::decode_log(log) {
+                return Ok(ERC1155Events::UriFilter(decoded));
+            }
+            Err(ethers::core::abi::Error::InvalidData)
+        }
+    }
+    impl ::std::fmt::Display for ERC1155Events {
+        fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+            match self {
+                ERC1155Events::ApprovalForAllFilter(element) => element.fmt(f),
+                ERC1155Events::TransferBatchFilter(element) => element.fmt(f),
+                ERC1155Events::TransferSingleFilter(element) => element.fmt(f),
+                ERC1155Events::UriFilter(element) => element.fmt(f),
+            }
         }
     }
     #[doc = "Container type for all input parameters for the `balanceOf`function with signature `balanceOf(address)` and selector `[112, 160, 130, 49]`"]

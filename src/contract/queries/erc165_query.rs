@@ -9,9 +9,9 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::sync::Arc;
 
-pub struct IfacesQuery;
+pub struct ERC165Query;
 
-impl IfacesQuery {
+impl ERC165Query {
     pub async fn get_ifaces_for_addresses<M: Middleware>(
         addresses: Vec<Address>,
         ifaces: Vec<Iface>,

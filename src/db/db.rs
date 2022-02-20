@@ -26,11 +26,11 @@ impl Db {
         for address in addresses {
             match self.get_address(address) {
                 Some(entry) => {
-                    println!("Building from cache: {:?}", address.clone());
+                    // println!("Building from cache: {:?}", address.clone());
                     entries.push((*address, entry));
                 }
                 None => {
-                    println!("Cache miss: {:?}", address.clone());
+                    // println!("Cache miss: {:?}", address.clone());
                     absent.push(address.to_owned());
                 }
             };
@@ -45,7 +45,7 @@ impl Db {
                 match bincode::deserialize::<NftEntry>(&data) {
                     Ok(ac) => Some(ac),
                     Err(e) => {
-                        println!("Failed to decode key from db: {:?}", e);
+                        // println!("Failed to decode key from db: {:?}", e);
                         None
                     }
                 }
@@ -63,12 +63,12 @@ impl Db {
             Ok(data) => match self.insert(address, data) {
                 Ok(was_set) => Ok(was_set),
                 Err(e) => {
-                    println!("Failure saving address: {:?}", e);
+                    // println!("Failure saving address: {:?}", e);
                     Err(Box::new(e))
                 }
             },
             Err(e) => {
-                println!("Failed to encode address cache: {:?}", e);
+                // println!("Failed to encode address cache: {:?}", e);
                 Err(e)
             }
         }
@@ -96,12 +96,12 @@ impl Db {
                 match res {
                     Some(_last_value) => {
                         //...
-                        println!("Saved. Last value: {:?}", _last_value);
+                        // println!("Saved. Last value: {:?}", _last_value);
                         Ok(true)
                     }
                     None => {
                         //...
-                        println!("Saved. No last value returned");
+                        // println!("Saved. No last value returned");
                         Ok(false)
                     }
                 }

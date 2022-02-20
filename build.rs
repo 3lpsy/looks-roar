@@ -35,6 +35,10 @@ const ERC1155: &str = r#"[
     function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids) external view returns (uint256[] memory)
     function setApprovalForAll(address _operator, bool _approved) external
     function isApprovedForAll(address _owner, address _operator) external view returns (bool)
+    event TransferSingle(address indexed _operator, address indexed _from, address indexed _to, uint256 _id, uint256 _value)
+    event TransferBatch(address indexed _operator, address indexed _from, address indexed _to, uint256[] _ids, uint256[] _values)
+    event URI(string _value, uint256 indexed _id)
+    event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved)
 ]"#;
 const ERC1155_METADATA_URI: &str = r#"[
     function uri(uint256 _id) external view returns (string memory)

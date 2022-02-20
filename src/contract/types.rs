@@ -40,6 +40,15 @@ impl Iface {
             constants::ERC1155_METADATA_URI_IFACE_ID,
         ]
     }
+    pub fn all() -> Vec<Self> {
+        vec![
+            Self::ERC721,
+            Self::ERC721Enumerable,
+            Self::ERC721Metadata,
+            Self::ERC1155,
+            Self::ERC1155MetadataUri,
+        ]
+    }
 }
 impl From<[u8; 4]> for Iface {
     fn from(id: [u8; 4]) -> Self {
