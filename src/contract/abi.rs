@@ -1,7 +1,9 @@
 use super::queries::{ERC1155Query, ERC165Query, ERC721EnumerableQuery};
 use crate::contract::types::Iface;
 use crate::utils::AppError;
+use ethers::abi::Uint;
 use ethers::core::types::Address;
+use ethers::prelude::H160;
 use ethers::providers::Middleware;
 use std::collections::HashMap;
 use std::error::Error;
@@ -35,22 +37,43 @@ impl NFTAbi {
     pub async fn get_nft_tokens_for_addresses<M: Middleware>(
         addfaces: HashMap<Address, Vec<Iface>>,
         provider: Arc<M>,
-    ) -> Result<HashMap<Address, Vec<Iface>>, Box<dyn Error>> {
-        let mut erc721enums: Vec<Address> = vec![];
-        let mut erc1155s: Vec<Address> = vec![];
+    ) -> Result<HashMap<Address, Vec<Uint>>, Box<dyn Error>> {
+        // prepare hashmap to contain enumerated results
+        let mut itokens: HashMap<[u8; 4], Vec<Address>> = HashMap::new();
+        for iface in Iface::all() {
+            itokens.insert(iface.id(), vec![]);
+        }
+        // enumerate results
         for (address, ifaces) in addfaces.iter() {
             if ifaces.contains(&Iface::ERC721Enumerable) {
-                erc721enums.push(*address);
+                let entry = itokens.get_mut(&Iface::ERC721Enumerable.id()).unwrap();
+                entry.push(*address);
             } else if ifaces.contains(&Iface::ERC1155) {
-                erc1155s.push(*address);
+                let entry = itokens.get_mut(&Iface::ERC1155.id()).unwrap();
+                entry.push(*address);
             }
             //other things
         }
-        let erc721_tokens =
-            ERC721EnumerableQuery::get_tokens_for_addresses(&erc721enums, provider.clone()).await?;
-        let erc1155_tokens =
-            ERC1155Query::get_tokens_for_addresses(&erc1155s, provider.clone()).await?;
+        let mut results: HashMap<H160, Vec<Uint>> = HashMap::new();
 
+        for (k, v) in ERC721EnumerableQuery::get_tokens_for_addresses(
+            itokens.get(&Iface::ERC721Enumerable.id()).unwrap(),
+            provider.clone(),
+        )
+        .await?
+        {
+            results.insert(k, v);
+        }
+
+        for (k, v) in ERC1155Query::get_tokens_for_addresses(
+            itokens.get(&Iface::ERC1155.id()).unwrap(),
+            provider.clone(),
+        )
+        .await?
+        {
+            results.insert(k, v);
+        }
+        dbg!(results);
         unimplemented!()
     }
 }

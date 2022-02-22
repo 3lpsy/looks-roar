@@ -18,7 +18,7 @@ impl ERC165Query {
         provider: Arc<M>,
     ) -> Result<HashMap<Address, Vec<Iface>>, Box<dyn Error>> {
         println!("Making multicall");
-        let (multi, mut queries) = Self::build_multi(addresses, ifaces, provider).await;
+        let (multi, queries) = Self::build_multi(addresses, ifaces, provider).await;
 
         // queries will hold index to zip against response
 
